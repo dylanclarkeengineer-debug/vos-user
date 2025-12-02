@@ -16,10 +16,10 @@ function cn(...inputs) {
 
 // --- MOCK DATA: MENU ITEMS ---
 const NAV_ITEMS = [
-    { name: "Store", href: "/account/billing", icon: "ri-store-2-line" },
-    { name: "Top Up", href: "/account/billing/payment", icon: "ri-coins-line" },
-    { name: "History", href: "/account/billing/history", icon: "ri-history-line" },
-    { name: "Refunds", href: "/account/billing/refunds", icon: "ri-exchange-dollar-line" },
+    { name: "Store", href: "/home/account/billing", icon: "ri-store-2-line" },
+    { name: "Top Up", href: "/home/account/billing/payment", icon: "ri-coins-line" },
+    { name: "History", href: "/home/account/billing/history", icon: "ri-history-line" },
+    { name: "Refunds", href: "/home/account/billing/refunds", icon: "ri-exchange-dollar-line" },
 ];
 
 // --- MOCK DATA: USER ---
@@ -33,7 +33,7 @@ export default function PricingLayout({ children }) {
     const pathname = usePathname();
 
     return (
-        <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
+        <div className="min-h-screen bg-slate-50 flex flex-col text-slate-900">
 
             {/* --- HEADER --- */}
             <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white shadow-sm">
@@ -93,7 +93,7 @@ export default function PricingLayout({ children }) {
                             {/* User Dropdown Trigger */}
                             <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
                                 <div className="hidden lg:flex flex-col items-end">
-                                    <span className="text-sm font-semibold text-slate-700 truncate max-w-[100px]">
+                                    <span className="text-sm text-slate-700 truncate max-w-[100px]">
                                         {MOCK_USER.name}
                                     </span>
                                 </div>

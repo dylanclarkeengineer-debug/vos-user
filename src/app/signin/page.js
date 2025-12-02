@@ -1,19 +1,31 @@
 "use client"
 
 import React, { useState } from 'react';
-import Link from 'next/link'; // Import Link của Next.js
-import { Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const LoginPage = () => {
-    // State quản lý UI
-    const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+    const [modalData, setModalData] = useState({ confirmPassword: '', code: '' });
+    const router = useRouter();
+
+    const handleOpenCodeModal = () => {
+        setIsModalOpen(true);
+    }
 
     // Hàm giả lập prevent reload
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log("Login attempt:", { email, password });
+        console.log("Login attempt:", { email });
+    };
+
+    const handleVerifyComplete = (e) => {
+        e.preventDefault();
+        console.log("Mockup: Signup Complete", { ...formData, ...modalData });
+        alert("Flow demo kết thúc. Chuyển hướng...");
+        router.push('/home');
     };
 
     return (
@@ -52,7 +64,7 @@ const LoginPage = () => {
                 <div className="relative z-10 flex flex-col items-center justify-center h-full">
                     <div className="relative">
                         {/* Chữ VGC lớn */}
-                        <h1 className="text-[12rem] leading-none font-serif font-medium tracking-tighter text-white mix-blend-difference select-none">
+                        <h1 className="text-[12rem] leading-none font-medium tracking-tighter text-white mix-blend-difference select-none">
                             <span className="relative z-10">V</span>
                             <span className="relative -ml-16 italic font-light text-neutral-400 z-0">G</span>
                             <span className="relative -ml-12 z-10">C</span>
@@ -76,8 +88,8 @@ const LoginPage = () => {
 
                     {/* Header */}
                     <div className="mb-16">
-                        <div className="lg:hidden mb-8 text-4xl font-serif font-bold tracking-tighter">VGC.</div>
-                        <h2 className="text-4xl font-serif font-light text-black mb-4">
+                        <div className="lg:hidden mb-8 text-4xl font-bold tracking-tighter">VGC.</div>
+                        <h2 className="text-4xl font-light text-black mb-4">
                             Welcome Back
                         </h2>
                         <p className="text-neutral-500 text-sm font-medium tracking-wide">
@@ -108,61 +120,12 @@ const LoginPage = () => {
                             </label>
                             <div className="absolute bottom-0 left-0 h-[2px] bg-black input-underline"></div>
                         </div>
-
-                        {/* Password Input */}
-                        <div className="relative group">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                id="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="peer w-full px-0 py-3 border-b border-neutral-200 bg-transparent text-black placeholder-transparent focus:outline-none focus:border-transparent transition-all duration-300 font-medium text-lg"
-                                placeholder="Password"
-                            />
-                            <label
-                                htmlFor="password"
-                                className="absolute left-0 -top-3.5 text-neutral-400 text-xs transition-all 
-                                peer-placeholder-shown:text-base peer-placeholder-shown:text-neutral-400 peer-placeholder-shown:top-3 
-                                peer-focus:-top-3.5 peer-focus:text-black peer-focus:text-xs font-bold uppercase tracking-wider"
-                            >
-                                Password
-                            </label>
-
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-0 top-3 text-neutral-400 hover:text-black transition-colors"
-                            >
-                                {showPassword ? <EyeOff size={20} strokeWidth={1.5} /> : <Eye size={20} strokeWidth={1.5} />}
-                            </button>
-                            <div className="absolute bottom-0 left-0 h-[2px] bg-black input-underline"></div>
-                        </div>
-
-                        {/* Remember & Forgot Password */}
-                        <div className="flex items-center justify-between text-xs mt-2">
-                            <label className="flex items-center gap-2 cursor-pointer group">
-                                <div className="w-4 h-4 border border-neutral-300 group-hover:border-black transition-colors flex items-center justify-center">
-                                    <input type="checkbox" className="hidden" />
-                                    {/* Giả lập checkbox UI */}
-                                    <div className="w-2 h-2 bg-black opacity-0 group-hover:opacity-100 transition-opacity peer-checked:opacity-100"></div>
-                                </div>
-                                <span className="text-neutral-500 group-hover:text-black transition-colors">Remember me</span>
-                            </label>
-
-                            {/* Dùng Link thay cho a */}
-                            <Link
-                                href="/forgot-password"
-                                className="text-neutral-500 hover:text-black transition-colors underline decoration-transparent hover:decoration-black underline-offset-4"
-                            >
-                                Forgot password?
-                            </Link>
-                        </div>
-
                         {/* Button Login */}
                         <div className="pt-6">
                             <button
                                 type="submit"
                                 className="group relative w-full py-4 bg-black text-white overflow-hidden transition-all duration-300 hover:shadow-xl"
+                                onClick={handleOpenCodeModal}
                             >
                                 <div className="absolute inset-0 bg-neutral-800 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)]"></div>
                                 <span className="relative z-10 flex items-center justify-center gap-3 font-bold tracking-[0.2em] uppercase text-xs">
@@ -172,22 +135,54 @@ const LoginPage = () => {
                             </button>
                         </div>
                     </form>
-
-                    {/* Footer */}
-                    <div className="mt-16 text-center">
-                        <p className="text-neutral-400 text-xs">
-                            Not a member?{" "}
-                            {/* Dùng Link thay cho a */}
-                            <Link
-                                href="/signup"
-                                className="text-black font-bold uppercase tracking-wider border-b border-black/20 hover:border-black pb-0.5 transition-all"
-                            >
-                                Request Access
-                            </Link>
-                        </p>
-                    </div>
                 </div>
             </div>
+
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-neutral-950/80 backdrop-blur-sm transition-opacity"
+                        onClick={() => setIsModalOpen(false)}
+                    ></div>
+
+                    {/* Modal Content */}
+                    <div className="relative bg-white w-full max-w-md p-10 animate-modal shadow-2xl border border-neutral-200">
+                        <button
+                            onClick={() => setIsModalOpen(false)}
+                            className="absolute top-6 right-6 text-neutral-400 hover:text-black transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <form onSubmit={handleVerifyComplete} className="space-y-8">
+                            <div>
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1 block">
+                                    Verification Code
+                                </label>
+                                <input
+                                    type="text"
+                                    maxLength={6}
+                                    className="w-full bg-neutral-50 border border-neutral-200 py-3 text-center text-2xl font-mono tracking-[0.5em] text-black focus:border-black focus:outline-none transition-colors placeholder-neutral-300"
+                                    placeholder="------"
+                                    value={modalData.code}
+                                    onChange={(e) => setModalData({ ...modalData, code: e.target.value })}
+                                />
+                            </div>
+
+                            <button type="submit" className="w-full py-4 bg-black text-white font-bold text-xs uppercase tracking-[0.2em] hover:bg-neutral-800 transition-colors">
+                                Verify & Create
+                            </button>
+
+                            <div className="text-center">
+                                <button type="button" className="text-[10px] text-neutral-400 hover:text-black font-medium tracking-wider uppercase border-b border-transparent hover:border-black transition-all">
+                                    Resend Code
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

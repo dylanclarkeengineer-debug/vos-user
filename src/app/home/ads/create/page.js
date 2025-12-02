@@ -33,7 +33,7 @@ export default function AdsCreatePage() {
 
             {/* --- HEADER & BREADCRUMB --- */}
             <div className="space-y-1">
-                <h1 className="font-serif font-bold text-3xl text-neutral-900">Create New Classified Post</h1>
+                <h1 className=" font-bold text-3xl text-neutral-900">Create New Classified Post</h1>
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-neutral-400">
                     <Link href="/home" className="hover:text-neutral-900 transition-colors">Dashboard</Link>
                     <i className="ri-arrow-right-s-line"></i>
@@ -50,7 +50,7 @@ export default function AdsCreatePage() {
                 {/* 1. POST SETTINGS */}
                 <Card className="border-neutral-200 shadow-sm bg-white">
                     <CardHeader className="border-b border-neutral-100 pb-4">
-                        <CardTitle className="font-serif text-lg font-bold text-neutral-900">Post Settings</CardTitle>
+                        <CardTitle className=" text-lg font-bold text-neutral-900">Post Settings</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -106,7 +106,7 @@ export default function AdsCreatePage() {
                 {/* 2. POST DETAILS */}
                 <Card className="border-neutral-200 shadow-sm bg-white">
                     <CardHeader className="border-b border-neutral-100 pb-4">
-                        <CardTitle className="font-serif text-lg font-bold text-neutral-900">Post Details</CardTitle>
+                        <CardTitle className=" text-lg font-bold text-neutral-900">Post Details</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -165,7 +165,7 @@ export default function AdsCreatePage() {
                 {/* 3. LOCATION */}
                 <Card className="border-neutral-200 shadow-sm bg-white">
                     <CardHeader className="border-b border-neutral-100 pb-4">
-                        <CardTitle className="font-serif text-lg font-bold text-neutral-900">Location</CardTitle>
+                        <CardTitle className=" text-lg font-bold text-neutral-900">Location</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -194,7 +194,7 @@ export default function AdsCreatePage() {
                 {/* 4. RELATED BUSINESS */}
                 <Card className="border-neutral-200 shadow-sm bg-white">
                     <CardHeader className="border-b border-neutral-100 pb-4">
-                        <CardTitle className="font-serif text-lg font-bold text-neutral-900">Related Business</CardTitle>
+                        <CardTitle className=" text-lg font-bold text-neutral-900">Related Business</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
                         <div className="space-y-2">
@@ -217,7 +217,7 @@ export default function AdsCreatePage() {
                 {/* 5. SOCIAL MEDIA CONTACTS */}
                 <Card className="border-neutral-200 shadow-sm bg-white">
                     <CardHeader className="border-b border-neutral-100 pb-4 flex flex-row items-center justify-between">
-                        <CardTitle className="font-serif text-lg font-bold text-neutral-900">Social Media Contacts</CardTitle>
+                        <CardTitle className=" text-lg font-bold text-neutral-900">Social Media Contacts</CardTitle>
                         <Button type="button" onClick={addSocialLink} variant="outline" size="sm" className="text-xs font-bold uppercase tracking-widest h-8 border-neutral-300">
                             <i className="ri-add-line mr-1"></i> Add Link
                         </Button>
@@ -243,7 +243,7 @@ export default function AdsCreatePage() {
                 {/* 6. IMAGES */}
                 <Card className="border-neutral-200 shadow-sm bg-white">
                     <CardHeader className="border-b border-neutral-100 pb-4">
-                        <CardTitle className="font-serif text-lg font-bold text-neutral-900">Images (Optional)</CardTitle>
+                        <CardTitle className=" text-lg font-bold text-neutral-900">Images (Optional)</CardTitle>
                     </CardHeader>
                     <CardContent className="p-6">
                         <div className="border-2 border-dashed border-neutral-300 rounded-lg p-10 flex flex-col items-center justify-center text-center hover:bg-neutral-50 transition-colors cursor-pointer group bg-neutral-50/50">
@@ -265,9 +265,12 @@ export default function AdsCreatePage() {
 
                 {/* --- FOOTER ACTIONS --- */}
                 <div className="flex items-center justify-end gap-4 pt-4 border-t border-neutral-200">
-                    <Button type="button" variant="ghost" className="text-neutral-500 hover:text-neutral-900 font-bold text-sm">
-                        Cancel
-                    </Button>
+                    <Link href="/home">
+                        <Button type="button" variant="ghost" className="text-neutral-500 hover:text-neutral-900 font-bold text-sm">
+                            Cancel
+                        </Button>
+                    </Link>
+
                     <Button type="button" variant="outline" className="border-neutral-300 font-bold text-sm h-11 px-6">
                         Save as Draft
                     </Button>

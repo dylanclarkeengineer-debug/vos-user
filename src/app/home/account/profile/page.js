@@ -47,7 +47,7 @@ export default function AccountProfilePage() {
 
             {/* --- HEADER --- */}
             <div>
-                <h1 className="font-serif font-bold text-3xl text-neutral-900">Profile Settings</h1>
+                <h1 className=" font-bold text-3xl text-neutral-900">Profile Settings</h1>
                 <p className="text-neutral-500 text-sm mt-1">
                     Manage your personal information and account preferences.
                 </p>
@@ -60,7 +60,7 @@ export default function AccountProfilePage() {
 
                 {/* Header của Section */}
                 <div className="flex items-center justify-between p-6 border-b border-neutral-100 bg-neutral-50/50">
-                    <h2 className="font-serif font-bold text-lg text-neutral-900">Personal Information</h2>
+                    <h2 className=" font-bold text-lg text-neutral-900">Personal Information</h2>
                     <Button
                         onClick={toggleEdit}
                         variant={isEditing ? "default" : "outline"}
@@ -81,7 +81,7 @@ export default function AccountProfilePage() {
                         <Avatar className="h-24 w-24 border-2 border-neutral-100">
                             {/* Lấy ảnh giống Sidebar */}
                             <AvatarImage src="https://github.com/shadcn.png" alt="John Doe" />
-                            <AvatarFallback className="text-2xl font-serif">JD</AvatarFallback>
+                            <AvatarFallback className="text-2xl ">JD</AvatarFallback>
                         </Avatar>
 
                         <div className="space-y-2 pt-1">
@@ -173,7 +173,7 @@ export default function AccountProfilePage() {
                         Member Since
                     </span>
                     <div className="flex items-end justify-between">
-                        <span className="font-serif font-bold text-xl text-neutral-900">January 2024</span>
+                        <span className=" font-bold text-xl text-neutral-900">January 2024</span>
                         <i className="ri-calendar-line text-neutral-300 text-2xl"></i>
                     </div>
                 </div>
@@ -188,7 +188,7 @@ export default function AccountProfilePage() {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                         </span>
-                        <span className="font-serif font-bold text-xl text-neutral-900">Active</span>
+                        <span className=" font-bold text-xl text-neutral-900">Active</span>
                     </div>
                 </div>
 

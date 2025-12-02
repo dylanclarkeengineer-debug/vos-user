@@ -165,7 +165,7 @@ export default function PricingPage() {
                 <Badge variant="outline" className="mb-4 bg-white px-4 py-1 border-neutral-300 text-neutral-600 uppercase tracking-widest text-[10px]">
                     Pricing & Plans
                 </Badge>
-                <h1 className="text-3xl md:text-5xl font-serif font-bold mb-4 text-neutral-900">
+                <h1 className="text-3xl md:text-5xl font-bold mb-4 text-neutral-900">
                     {renderTrans(t("billing2Home.header.title"))}
                 </h1>
                 <p className="text-neutral-500 text-lg max-w-2xl mx-auto mb-6">
@@ -242,7 +242,7 @@ export default function PricingPage() {
                 {/* --- SECTION 2: VISUAL SIMULATIONS (MÔ PHỎNG) --- */}
                 <div className="space-y-20">
                     <div className="text-center max-w-3xl mx-auto">
-                        <h2 className="text-3xl font-serif font-bold text-neutral-900 mb-4">See How It Works</h2>
+                        <h2 className="text-3xl font-bold text-neutral-900 mb-4">See How It Works</h2>
                         <p className="text-neutral-500">
                             We offer powerful tools to boost your visibility. Here is a visual demonstration of our premium features.
                         </p>
@@ -435,7 +435,7 @@ export default function PricingPage() {
                 {/* --- SECTION 3: BUNDLES (COMBO) --- */}
                 <div className="mb-20">
                     <div className="text-center mb-10">
-                        <h2 className="text-3xl font-serif font-bold text-neutral-900">Value Bundles</h2>
+                        <h2 className="text-3xl font-bold text-neutral-900">Value Bundles</h2>
                         <p className="text-neutral-500 mt-2">Save up to 30% by choosing a package.</p>
                     </div>
 

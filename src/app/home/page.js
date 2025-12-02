@@ -19,7 +19,7 @@ export default function HomePage() {
 
                     <div className="relative z-10 flex justify-between items-center">
                         <div>
-                            <h1 className="font-serif font-bold text-3xl mb-2 tracking-tight">Welcome back, Minh!</h1>
+                            <h1 className=" font-bold text-3xl mb-2 tracking-tight">Welcome back, Minh!</h1>
                             <p className="text-neutral-400 text-sm font-medium tracking-wide">
                                 Manage your community presence and analytics from your dashboard.
                             </p>
@@ -38,7 +38,7 @@ export default function HomePage() {
                     <div className="bg-white p-5 rounded-sm border border-neutral-200 flex items-center justify-between hover:border-black transition-colors shadow-sm">
                         <div>
                             <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1">Ads Posted</p>
-                            <h3 className="text-2xl font-serif font-bold text-neutral-900">12</h3>
+                            <h3 className="text-2xl  font-bold text-neutral-900">12</h3>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
                             <i className="ri-megaphone-line text-lg"></i>
@@ -49,7 +49,7 @@ export default function HomePage() {
                     <div className="bg-white p-5 rounded-sm border border-neutral-200 flex items-center justify-between hover:border-black transition-colors shadow-sm">
                         <div>
                             <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1">Businesses</p>
-                            <h3 className="text-2xl font-serif font-bold text-neutral-900">3</h3>
+                            <h3 className="text-2xl  font-bold text-neutral-900">3</h3>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center border border-green-100">
                             <i className="ri-building-line text-lg"></i>
@@ -60,7 +60,7 @@ export default function HomePage() {
                     <div className="bg-white p-5 rounded-sm border border-neutral-200 flex items-center justify-between hover:border-black transition-colors shadow-sm">
                         <div>
                             <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1">Articles</p>
-                            <h3 className="text-2xl font-serif font-bold text-neutral-900">8</h3>
+                            <h3 className="text-2xl  font-bold text-neutral-900">8</h3>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
                             <i className="ri-file-text-line text-lg"></i>
@@ -71,7 +71,7 @@ export default function HomePage() {
                     <div className="bg-white p-5 rounded-sm border border-neutral-200 flex items-center justify-between hover:border-black transition-colors shadow-sm">
                         <div>
                             <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1">Total Views</p>
-                            <h3 className="text-2xl font-serif font-bold text-neutral-900">1,247</h3>
+                            <h3 className="text-2xl  font-bold text-neutral-900">1,247</h3>
                         </div>
                         <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-100">
                             <i className="ri-eye-line text-lg"></i>
@@ -90,7 +90,7 @@ export default function HomePage() {
                         <i className="ri-add-line text-xl"></i>
                     </div>
                     <div>
-                        <h3 className="font-serif font-bold text-lg text-neutral-900 mb-1">New Classified Ad</h3>
+                        <h3 className=" font-bold text-lg text-neutral-900 mb-1">New Classified Ad</h3>
                         <p className="text-xs text-neutral-500 leading-relaxed">
                             Post a new classified ad or job listing to reach the community.
                         </p>
@@ -106,7 +106,7 @@ export default function HomePage() {
                         <i className="ri-store-2-line text-xl"></i>
                     </div>
                     <div>
-                        <h3 className="font-serif font-bold text-lg text-neutral-900 mb-1">Register Business</h3>
+                        <h3 className=" font-bold text-lg text-neutral-900 mb-1">Register Business</h3>
                         <p className="text-xs text-neutral-500 leading-relaxed">
                             List your business in our premium directory for better visibility.
                         </p>
@@ -122,7 +122,7 @@ export default function HomePage() {
                         <i className="ri-article-line text-xl"></i>
                     </div>
                     <div>
-                        <h3 className="font-serif font-bold text-lg text-neutral-900 mb-1">Write Editorial</h3>
+                        <h3 className=" font-bold text-lg text-neutral-900 mb-1">Write Editorial</h3>
                         <p className="text-xs text-neutral-500 leading-relaxed">
                             Share news, insights, and stories with the global audience.
                         </p>
@@ -141,7 +141,7 @@ export default function HomePage() {
                 <div className="lg:col-span-2 space-y-4">
                     <div className="flex items-center gap-2 mb-2">
                         <i className="ri-briefcase-4-line text-lg text-neutral-400"></i>
-                        <h2 className="font-serif font-bold text-xl text-neutral-900">Recommended Opportunities</h2>
+                        <h2 className=" font-bold text-xl text-neutral-900">Recommended Opportunities</h2>
                     </div>
 
                     <div className="bg-white border border-neutral-200 rounded-sm overflow-hidden shadow-sm">
@@ -157,7 +157,7 @@ export default function HomePage() {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <span className="block font-serif font-bold text-neutral-900">$2,500 - $4,000</span>
+                                    <span className="block  font-bold text-neutral-900">$2,500 - $4,000</span>
                                     <span className="text-[10px] text-neutral-400 uppercase tracking-wide">/ Month</span>
                                 </div>
                             </div>
@@ -174,7 +174,7 @@ export default function HomePage() {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <span className="block font-serif font-bold text-neutral-900">$1,800 - $2,500</span>
+                                    <span className="block  font-bold text-neutral-900">$1,800 - $2,500</span>
                                     <span className="text-[10px] text-neutral-400 uppercase tracking-wide">/ Month</span>
                                 </div>
                             </div>
@@ -192,7 +192,7 @@ export default function HomePage() {
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-2">
                         <i className="ri-shield-star-line text-lg text-neutral-400"></i>
-                        <h2 className="font-serif font-bold text-xl text-neutral-900">Trusted Partners</h2>
+                        <h2 className=" font-bold text-xl text-neutral-900">Trusted Partners</h2>
                     </div>
 
                     <div className="bg-white border border-neutral-200 rounded-sm p-1 shadow-sm">

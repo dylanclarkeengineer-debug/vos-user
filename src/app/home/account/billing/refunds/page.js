@@ -141,7 +141,7 @@ export default function PointRefundPage() {
             {/* --- HEADER --- */}
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-neutral-200">
                 <div>
-                    <h1 className="text-3xl font-serif font-bold text-neutral-900 flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-neutral-900 flex items-center gap-3">
                         <i className="ri-shield-check-line text-indigo-600"></i> Refund Center
                     </h1>
                     <p className="text-neutral-500 mt-2 text-sm">
@@ -169,7 +169,7 @@ export default function PointRefundPage() {
                         </div>
                         <div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Requests</p>
-                            <p className="text-2xl font-extrabold text-slate-900">{stats.pending}</p>
+                            <p className="text-2xl text-slate-900">{stats.pending}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -180,7 +180,7 @@ export default function PointRefundPage() {
                         </div>
                         <div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Resolved</p>
-                            <p className="text-2xl font-extrabold text-slate-900">{stats.approved}</p>
+                            <p className="text-2xl text-slate-900">{stats.approved}</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -191,7 +191,7 @@ export default function PointRefundPage() {
                         </div>
                         <div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Points Restored</p>
-                            <p className="text-2xl font-extrabold text-slate-900">{stats.restored.toLocaleString()} pts</p>
+                            <p className="text-2xl text-slate-900">{stats.restored.toLocaleString()} pts</p>
                         </div>
                     </CardContent>
                 </Card>
@@ -257,7 +257,7 @@ export default function PointRefundPage() {
                         {paginatedData.length > 0 ? paginatedData.map((item) => (
                             <TableRow key={item.id} className="hover:bg-neutral-50 border-neutral-100">
                                 <TableCell className="py-4">
-                                    <span className="block font-mono font-bold text-neutral-900 text-xs">{item.id}</span>
+                                    <span className="block font-bold text-neutral-900 text-xs">{item.id}</span>
                                     <span className="text-xs text-neutral-500">{item.date}</span>
                                 </TableCell>
                                 <TableCell className="py-4">
@@ -269,7 +269,7 @@ export default function PointRefundPage() {
                                 </TableCell>
                                 <TableCell className="py-4">
                                     <p className="font-medium text-sm text-neutral-900">{item.reason}</p>
-                                    <p className="text-xs text-neutral-400 mt-0.5">Ref: <span className="font-mono">{item.relatedRef}</span></p>
+                                    <p className="text-xs text-neutral-400 mt-0.5">Ref: <span>{item.relatedRef}</span></p>
                                 </TableCell>
                                 <TableCell className="py-4 text-right">
                                     <span className="font-bold text-neutral-900">{item.value}</span>
