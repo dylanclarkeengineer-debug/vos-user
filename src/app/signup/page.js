@@ -102,7 +102,14 @@ const SignupPageUI = () => {
                                 className="peer w-full px-0 py-3 border-b border-neutral-200 bg-transparent text-black placeholder-transparent focus:outline-none text-lg font-medium transition-all"
                                 placeholder="Full Name"
                             />
-                            <label htmlFor="name" className="absolute left-0 -top-3.5 text-neutral-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-neutral-400 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-black peer-focus:text-xs font-bold uppercase tracking-wider">
+                            <label
+                                htmlFor="name"
+                                className={`
+                                  absolute left-0 -top-3.5 text-neutral-400 text-xs transition-all
+                                  peer-placeholder-shown:text-base peer-placeholder-shown:text-neutral-400 peer-placeholder-shown:top-3
+                                  peer-focus:-top-3.5 peer-focus:text-black peer-focus:text-xs font-bold uppercase tracking-wider
+                                `}
+                            >
                                 Full Name
                             </label>
                             <div className="absolute bottom-0 left-0 h-[2px] bg-black input-underline"></div>
@@ -116,7 +123,14 @@ const SignupPageUI = () => {
                                 className="peer w-full px-0 py-3 border-b border-neutral-200 bg-transparent text-black placeholder-transparent focus:outline-none text-lg font-medium transition-all"
                                 placeholder="Email"
                             />
-                            <label htmlFor="email" className="absolute left-0 -top-3.5 text-neutral-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-neutral-400 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-black peer-focus:text-xs font-bold uppercase tracking-wider">
+                            <label
+                                htmlFor="email"
+                                className={`
+                                  absolute left-0 -top-3.5 text-neutral-400 text-xs transition-all
+                                  peer-placeholder-shown:text-base peer-placeholder-shown:text-neutral-400 peer-placeholder-shown:top-3
+                                  peer-focus:-top-3.5 peer-focus:text-black peer-focus:text-xs font-bold uppercase tracking-wider
+                                `}
+                            >
                                 Email Address
                             </label>
                             <div className="absolute bottom-0 left-0 h-[2px] bg-black input-underline"></div>
@@ -130,7 +144,14 @@ const SignupPageUI = () => {
                                 className="peer w-full px-0 py-3 border-b border-neutral-200 bg-transparent text-black placeholder-transparent focus:outline-none text-lg font-medium transition-all"
                                 placeholder="Password"
                             />
-                            <label htmlFor="password" className="absolute left-0 -top-3.5 text-neutral-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-neutral-400 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-black peer-focus:text-xs font-bold uppercase tracking-wider">
+                            <label
+                                htmlFor="password"
+                                className={`
+                                  absolute left-0 -top-3.5 text-neutral-400 text-xs transition-all
+                                  peer-placeholder-shown:text-base peer-placeholder-shown:text-neutral-400 peer-placeholder-shown:top-3
+                                  peer-focus:-top-3.5 peer-focus:text-black peer-focus:text-xs font-bold uppercase tracking-wider
+                                `}
+                            >
                                 Create Password
                             </label>
                             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-0 top-3 text-neutral-400 hover:text-black transition-colors">

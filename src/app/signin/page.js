@@ -112,9 +112,7 @@ const LoginPage = () => {
                             />
                             <label
                                 htmlFor="email"
-                                className="absolute left-0 -top-3.5 text-neutral-400 text-xs transition-all 
-                                peer-placeholder-shown:text-base peer-placeholder-shown:text-neutral-400 peer-placeholder-shown:top-3 
-                                peer-focus:-top-3.5 peer-focus:text-black peer-focus:text-xs font-bold uppercase tracking-wider"
+                                className="absolute left-0 -top-3.5 text-neutral-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-neutral-400 peer-placeholder-shown:top-3 peer-focus:-top-3.5 peer-focus:text-black peer-focus:text-xs font-bold uppercase tracking-wider"
                             >
                                 Email Address
                             </label>
