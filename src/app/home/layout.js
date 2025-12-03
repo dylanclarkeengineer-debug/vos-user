@@ -43,7 +43,7 @@ const MENU_ITEMS = [
         icon: "ri-building-line",
         subItems: [
             { label: "Create Business", icon: "ri-add-circle-line", href: "/home/business/create" },
-            { label: "My Businesses", icon: "ri-store-2-line", href: "/home/business" },
+            { label: "My Businesses", icon: "ri-store-2-line", href: "/home/business/list" },
             { label: "Analytics", icon: "ri-bar-chart-2-line", href: "/home/business/analytics" },
         ]
     },
@@ -119,10 +119,10 @@ export default function HomeLayout({ children }) {
                             asChild
                             variant="outline"
                             className={`w-full h-9 text-xs uppercase tracking-wider font-bold rounded-sm border-neutral-200 transition-all 
-                                ${pathname === '/account/profile' ? 'bg-neutral-900 text-white border-neutral-900' : 'hover:bg-neutral-50 hover:text-black'}
+                                ${pathname === '/home/account/profile' ? 'bg-neutral-900 text-white border-neutral-900' : 'hover:bg-neutral-50 hover:text-black'}
                             `}
                         >
-                            <Link href="/account/profile">
+                            <Link href="/home/account/profile">
                                 <i className="ri-settings-3-line mr-2 text-sm"></i> Profile
                             </Link>
                         </Button>
