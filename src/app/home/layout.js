@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react';
+import React, { useState, useEffect } from 'react'; // Thêm useState, useEffect
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -36,7 +36,7 @@ const MENU_ITEMS = [
         icon: "ri-building-line",
         subItems: [
             { label: "Create Business", icon: "ri-add-circle-line", href: "/home/business/create" },
-            { label: "My Business", icon: "ri-user-2-fill", href: "/home/account/profile" },
+            { label: "My Business", icon: "ri-user-2-fill", href: "/home/business/list" },
             { label: "Job Application", icon: "ri-user-add-line", href: "/business/analytics" },
         ]
     },
@@ -63,10 +63,18 @@ const MENU_ITEMS = [
 const Sidebar = () => {
     const pathname = usePathname();
 
-    // Logic: Tìm xem pathname hiện tại thuộc về nhóm (id) nào để mở sẵn Accordion
-    const activeSectionId = MENU_ITEMS.find(section =>
-        section.subItems.some(item => item.href === pathname)
-    )?.id || "ads"; // Mặc định mở ads nếu không tìm thấy
+    // FIX HYDRATION ERROR:
+    // 1. Khởi tạo state rỗng để Server và Client giống nhau ở lần render đầu tiên (tránh lệch ID)
+    const [openItems, setOpenItems] = useState([]);
+
+    // 2. Sử dụng useEffect để tính toán mục cần mở sau khi đã render trên Client
+    useEffect(() => {
+        const activeSectionId = MENU_ITEMS.find(section =>
+            section.subItems.some(item => item.href === pathname)
+        )?.id || "ads";
+
+        setOpenItems([activeSectionId]);
+    }, [pathname]);
 
     return (
         <aside className="w-72 h-full flex flex-col bg-white border-r border-neutral-200 shrink-0 z-20 overflow-hidden">
@@ -89,27 +97,26 @@ const Sidebar = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                    <Link href="/home/account/profile" className="w-full">
-                        <Button
-                            variant="outline"
-                            className={`w-full h-9 text-xs uppercase tracking-wider font-bold rounded-sm border-neutral-200 transition-all
-                                ${pathname === '/home/account/profile' ? 'bg-neutral-900 text-white border-neutral-900 hover:bg-neutral-800 hover:text-white' : 'hover:bg-neutral-50 hover:text-black'}
-                            `}
-                        >
+                    {/* Dùng asChild để tránh lỗi lồng thẻ button trong a */}
+                    <Button
+                        asChild
+                        variant="outline"
+                        className={`w-full h-9 text-xs uppercase tracking-wider font-bold rounded-sm border-neutral-200 transition-all ${pathname === '/home/account/profile' ? 'bg-neutral-900 text-white border-neutral-900' : 'hover:bg-neutral-50 hover:text-black'}`}
+                    >
+                        <Link href="/home/account/profile">
                             <i className="ri-settings-3-line mr-2 text-sm"></i> Profile
-                        </Button>
-                    </Link>
+                        </Link>
+                    </Button>
 
-                    <Link href="/home/account/billing" className="w-full">
-                        <Button
-                            variant="outline"
-                            className={`w-full h-9 text-xs uppercase tracking-wider font-bold rounded-sm border-neutral-200 transition-all
-                                ${pathname === '/home/account/billing' ? 'bg-neutral-900 text-white border-neutral-900 hover:bg-neutral-800 hover:text-white' : 'hover:bg-neutral-50 hover:text-black'}
-                            `}
-                        >
+                    <Button
+                        asChild
+                        variant="outline"
+                        className={`w-full h-9 text-xs uppercase tracking-wider font-bold rounded-sm border-neutral-200 transition-all ${pathname === '/home/account/billing' ? 'bg-neutral-900 text-white border-neutral-900' : 'hover:bg-neutral-50 hover:text-black'}`}
+                    >
+                        <Link href="/home/account/billing">
                             <i className="ri-wallet-3-line mr-2 text-sm"></i> Billing
-                        </Button>
-                    </Link>
+                        </Link>
+                    </Button>
                 </div>
             </div>
 
@@ -120,9 +127,14 @@ const Sidebar = () => {
             {/* Navigation Area */}
             <div className="flex-1 min-h-0 w-full">
                 <ScrollArea className="h-full w-full px-4 py-6">
-                    <Accordion type="multiple" defaultValue={[activeSectionId]} className="w-full space-y-4 pr-3">
+                    {/* FIX: Chuyển sang Controlled Component (dùng value & onValueChange) */}
+                    <Accordion
+                        type="multiple"
+                        value={openItems}
+                        onValueChange={setOpenItems}
+                        className="w-full space-y-4 pr-3"
+                    >
                         {MENU_ITEMS.map((section) => {
-                            // Kiểm tra xem nhóm này có item nào đang active không
                             const isSectionActive = section.subItems.some(item => item.href === pathname);
 
                             return (
@@ -148,8 +160,8 @@ const Sidebar = () => {
                                                         href={item.href}
                                                         className={`w-full flex items-center gap-3 py-2 px-3 text-sm transition-all duration-200 rounded-md text-left group
                                                             ${isActive
-                                                                ? 'bg-neutral-900 text-white font-bold shadow-sm' // Style khi Active
-                                                                : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100' // Style mặc định
+                                                                ? 'bg-neutral-900 text-white font-bold shadow-sm'
+                                                                : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100'
                                                             }
                                                         `}
                                                     >
@@ -165,7 +177,7 @@ const Sidebar = () => {
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>
-                            )
+                            );
                         })}
                     </Accordion>
                 </ScrollArea>
@@ -210,6 +222,16 @@ export default function HomeLayout({ children }) {
         <div className="fixed inset-0 flex h-screen w-full bg-[#F8F8F8] font-sans text-neutral-900 selection:bg-neutral-900 selection:text-white overflow-hidden">
             <Sidebar />
             <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+                {/* Header */}
+                <header className="h-16 border-b border-neutral-200 bg-white flex items-center justify-between px-8 shrink-0 z-10">
+                    <div className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-400">
+                        {getBreadcrumb()}
+                    </div>
+                    <div className="text-sm italic text-neutral-500">
+                        "Veritas. Gravitas. Claritas."
+                    </div>
+                </header>
+
                 {/* Content Area */}
                 <div className="flex-1 overflow-y-auto p-8 scroll-smooth bg-[#F8F8F8]">
                     <div className="max-w-5xl mx-auto pb-10">
