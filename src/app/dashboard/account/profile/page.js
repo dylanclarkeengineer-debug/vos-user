@@ -33,28 +33,6 @@ export default function AccountProfilePage() {
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-10 pt-4">
-
-            {/* --- NEW: BACK TO HOME NAVIGATION --- */}
-            <div>
-                <Link
-                    href="/home"
-                    className="inline-flex items-center text-xs font-bold text-neutral-400 hover:text-neutral-900 transition-colors uppercase tracking-widest group"
-                >
-                    <i className="ri-arrow-left-line mr-2 text-lg group-hover:-translate-x-1 transition-transform"></i>
-                    Back to Dashboard
-                </Link>
-            </div>
-
-            {/* --- HEADER --- */}
-            <div>
-                <h1 className=" font-bold text-3xl text-neutral-900">Profile Settings</h1>
-                <p className="text-neutral-500 text-sm mt-1">
-                    Manage your personal information and account preferences.
-                </p>
-            </div>
-
-            <Separator className="bg-neutral-200" />
-
             {/* --- SECTION 1: PERSONAL INFORMATION --- */}
             <div className="bg-white border border-neutral-200 rounded-sm overflow-hidden shadow-sm">
 

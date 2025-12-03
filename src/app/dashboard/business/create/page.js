@@ -26,22 +26,6 @@ export default function BusinessCreatePage() {
 
     return (
         <div className="max-w-5xl mx-auto pb-20 pt-6 px-4 sm:px-6 lg:px-8 space-y-10 animate-fade-in">
-
-            {/* --- HEADER --- */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-                        <Link href="/home" className="hover:text-neutral-900 transition-colors">Dashboard</Link>
-                        <i className="ri-arrow-right-s-line"></i>
-                        <Link href="/business" className="hover:text-neutral-900 transition-colors">Business</Link>
-                        <i className="ri-arrow-right-s-line"></i>
-                        <span className="text-neutral-900 border-b border-neutral-900">Create</span>
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-bold text-neutral-900 tracking-tight">Create Business Profile</h1>
-                    <p className="text-sm text-neutral-500 max-w-2xl">Establish your digital presence. Reach more customers by creating a detailed business profile.</p>
-                </div>
-            </div>
-
             {/* --- VALUE PROP BANNER (Monochrome) --- */}
             <div className="bg-neutral-900 rounded-sm p-6 md:p-8 text-white shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                 <div className="flex gap-4 items-start group">

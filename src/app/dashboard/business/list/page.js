@@ -139,20 +139,6 @@ export default function BusinessListPage() {
 
     return (
         <div className="max-w-[1400px] mx-auto pb-32 pt-6 px-4 animate-fade-in font-sans">
-
-            {/* --- HEADER --- */}
-            <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">My Businesses</h1>
-                    <p className="text-neutral-500 text-sm mt-1">Manage your business listings and performance.</p>
-                </div>
-                <Link href="/home/business/create">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest h-10 px-6 rounded-sm shadow-sm transition-all active:scale-95">
-                        <i className="ri-add-line mr-2 text-lg"></i> Create New Business
-                    </Button>
-                </Link>
-            </div>
-
             {/* --- STATS OVERVIEW --- */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                 {/* ... (Stats cards remain unchanged) ... */}

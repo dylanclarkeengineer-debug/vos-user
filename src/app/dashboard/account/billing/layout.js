@@ -16,10 +16,10 @@ function cn(...inputs) {
 
 // --- MOCK DATA: MENU ITEMS ---
 const NAV_ITEMS = [
-    { name: "Store", href: "/home/account/billing", icon: "ri-store-2-line" },
-    { name: "Top Up", href: "/home/account/billing/payment", icon: "ri-coins-line" },
-    { name: "History", href: "/home/account/billing/history", icon: "ri-history-line" },
-    { name: "Refunds", href: "/home/account/billing/refunds", icon: "ri-exchange-dollar-line" },
+    { name: "Store", href: "/dashboard/account/billing", icon: "ri-store-2-line" },
+    { name: "Top Up", href: "/dashboard/account/billing/payment", icon: "ri-coins-line" },
+    { name: "History", href: "/dashboard/account/billing/history", icon: "ri-history-line" },
+    { name: "Refunds", href: "/dashboard/account/billing/refunds", icon: "ri-exchange-dollar-line" },
 ];
 
 // --- MOCK DATA: USER ---
@@ -41,7 +41,7 @@ export default function PricingLayout({ children }) {
                     <div className="flex h-16 items-center justify-between">
 
                         {/* 1. Logo */}
-                        <Link href="/home" className="flex items-center gap-2 flex-shrink-0 cursor-pointer group">
+                        <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0 cursor-pointer group">
                             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-sm group-hover:scale-105 transition-transform">V</div>
                             <span className="text-lg font-bold text-slate-900 hidden sm:block tracking-tight">
                                 VGC System
@@ -85,7 +85,7 @@ export default function PricingLayout({ children }) {
                                         <i className="ri-copper-coin-fill text-yellow-500 text-sm"></i>
                                     </div>
                                 </div>
-                                <Link href="/home/billing/payment-methods" className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 hover:scale-105 transition-all shadow-md">
+                                <Link href="/dashboard/billing/payment-methods" className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 hover:scale-105 transition-all shadow-md">
                                     <i className="ri-add-line text-lg"></i>
                                 </Link>
                             </div>
@@ -131,7 +131,7 @@ export default function PricingLayout({ children }) {
                             {/* SỬA LỖI HYDRATION: Thêm 'en-US' */}
                             <span>Balance: {MOCK_USER.points.toLocaleString('en-US')} Pts</span>
                         </div>
-                        <Link href="/home/billing/payment-methods" className="text-[10px] font-bold bg-indigo-600 text-white px-3 py-1 rounded-full uppercase tracking-wider">
+                        <Link href="/dashboard/billing/payment-methods" className="text-[10px] font-bold bg-indigo-600 text-white px-3 py-1 rounded-full uppercase tracking-wider">
                             Top Up
                         </Link>
                     </div>
