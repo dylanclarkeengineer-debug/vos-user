@@ -72,7 +72,7 @@ export default function DashboardLayout({ children }) {
     const pathname = usePathname();
     const [openItems, setOpenItems] = useState([]);
 
-    // --- LOGIC MỚI: Tự động mở Accordion khi reload trang ---
+    // --- 1. Tự động mở Accordion Menu khi reload trang ---
     useEffect(() => {
         const activeSectionId = MENU_ITEMS.find(section =>
             section.subItems.some(item => pathname.startsWith(item.href))
@@ -83,10 +83,10 @@ export default function DashboardLayout({ children }) {
         }
     }, [pathname]);
 
-    // --- LOGIC MỚI: Tìm thông tin trang hiện tại (Active Page) ---
-    // Sử dụng useMemo để tính toán lại mỗi khi pathname thay đổi
+    // --- 2. LOGIC QUAN TRỌNG: Tính toán thông tin Header ---
+    // Dùng useMemo để luôn trả về giá trị, không bao giờ undefined
     const activePageInfo = useMemo(() => {
-        // 1. Xử lý trường hợp trang chủ Dashboard
+        // Trường hợp trang chủ Dashboard
         if (pathname === '/dashboard') {
             return {
                 title: "Dashboard Overview",
@@ -95,9 +95,8 @@ export default function DashboardLayout({ children }) {
             };
         }
 
-        // 2. Tìm trong danh sách Menu
+        // Tìm trong danh sách Menu xem trang hiện tại có khớp không
         for (const section of MENU_ITEMS) {
-            // Tìm item khớp với đường dẫn hiện tại
             const match = section.subItems.find(item => pathname.startsWith(item.href));
 
             if (match) {
@@ -109,7 +108,8 @@ export default function DashboardLayout({ children }) {
             }
         }
 
-        // 3. Fallback (Nếu không tìm thấy - ví dụ trang 404 hoặc trang chưa define)
+        // FALLBACK: Nếu không tìm thấy (ví dụ trang mới tạo chưa khai báo), trả về mặc định
+        // Đây chính là phần giúp Header không bị biến mất
         return {
             title: "Dashboard",
             icon: "ri-layout-grid-line",
@@ -117,14 +117,13 @@ export default function DashboardLayout({ children }) {
         };
     }, [pathname]);
 
-
     return (
         <div className={`fixed inset-0 flex h-screen w-full bg-[#F8F8F8] font-sans text-neutral-900 selection:bg-neutral-900 selection:text-white overflow-hidden ${inter.className}`}>
 
             {/* --- SIDEBAR --- */}
             <aside className="w-72 h-full flex flex-col bg-white border-r border-neutral-200 shrink-0 z-20 overflow-hidden">
 
-                {/* User Profile Header - Fixed Top */}
+                {/* User Profile */}
                 <div className="p-8 pb-6 shrink-0">
                     <div className="flex items-center gap-4 mb-6">
                         <Avatar className="h-12 w-12 border border-neutral-200">
@@ -172,12 +171,11 @@ export default function DashboardLayout({ children }) {
                     <Separator className="bg-neutral-100" />
                 </div>
 
-                {/* Navigation Menu - Scrollable Area */}
+                {/* Navigation Menu */}
                 <div className="flex-1 min-h-0 w-full">
                     <ScrollArea className="h-full w-full px-4 py-6">
                         <div className="w-full space-y-2">
-
-                            {/* --- 1. DASHBOARD LINK --- */}
+                            {/* Dashboard Link */}
                             <Button
                                 asChild
                                 variant="ghost"
@@ -196,7 +194,7 @@ export default function DashboardLayout({ children }) {
                                 </Link>
                             </Button>
 
-                            {/* --- 2. ACCORDION MENU --- */}
+                            {/* Accordion Menu */}
                             <Accordion
                                 type="multiple"
                                 value={openItems}
@@ -251,7 +249,7 @@ export default function DashboardLayout({ children }) {
                     </ScrollArea>
                 </div>
 
-                {/* Footer Help - Fixed Bottom */}
+                {/* Footer Help */}
                 <div className="p-4 shrink-0 bg-white border-t border-neutral-100">
                     <div className="bg-neutral-50 border border-neutral-200 rounded-sm p-4 space-y-3">
                         <div className="space-y-1">
@@ -271,7 +269,7 @@ export default function DashboardLayout({ children }) {
 
             {/* --- MAIN CONTENT --- */}
             <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-[#F8F8F8]">
-                {/* Header - Fixed Height */}
+                {/* Header: SỬ DỤNG activePageInfo ĐÃ TÍNH TOÁN Ở TRÊN */}
                 <header className="h-20 border-b border-neutral-200 bg-white flex flex-col justify-center px-8 shrink-0 z-10">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center border border-neutral-200">
@@ -288,7 +286,6 @@ export default function DashboardLayout({ children }) {
                     </div>
                 </header>
 
-                {/* Children Content - Scrollable */}
                 <div className="flex-1 overflow-y-auto p-8 scroll-smooth">
                     <div className="max-w-7xl mx-auto pb-10">
                         {children}
