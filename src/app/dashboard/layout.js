@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Inter } from 'next/font/google';
@@ -23,7 +23,7 @@ import {
 // 1. Cấu hình Font Inter
 const inter = Inter({ subsets: ['latin'] });
 
-// 2. Dữ liệu Menu (Các mục có Dropdown)
+// 2. Dữ liệu Menu
 const MENU_ITEMS = [
     {
         id: "ads",
@@ -68,37 +68,54 @@ const MENU_ITEMS = [
     }
 ];
 
-export default function dashboardLayout({ children }) {
+export default function DashboardLayout({ children }) {
     const pathname = usePathname();
     const [openItems, setOpenItems] = useState([]);
-    const [opemItemTitle, setOpenItemTitle] = useState("");
 
+    // --- LOGIC MỚI: Tự động mở Accordion khi reload trang ---
     useEffect(() => {
         const activeSectionId = MENU_ITEMS.find(section =>
             section.subItems.some(item => pathname.startsWith(item.href))
         )?.id;
 
-        const activeTitle = MENU_ITEMS.find(section =>
-            section.subItems.some(item => item.href === pathname)
-        )?.subItems.find(item => item.href === pathname)?.title;
-
         if (activeSectionId) {
             setOpenItems([activeSectionId]);
         }
-
-        setOpenItemTitle(activeTitle);
     }, [pathname]);
 
-    const getBreadcrumb = () => {
+    // --- LOGIC MỚI: Tìm thông tin trang hiện tại (Active Page) ---
+    // Sử dụng useMemo để tính toán lại mỗi khi pathname thay đổi
+    const activePageInfo = useMemo(() => {
+        // 1. Xử lý trường hợp trang chủ Dashboard
+        if (pathname === '/dashboard') {
+            return {
+                title: "Dashboard Overview",
+                icon: "ri-dashboard-line",
+                breadcrumb: "DASHBOARD"
+            };
+        }
+
+        // 2. Tìm trong danh sách Menu
         for (const section of MENU_ITEMS) {
-            const match = section.subItems.find(i => pathname.startsWith(i.href));
+            // Tìm item khớp với đường dẫn hiện tại
+            const match = section.subItems.find(item => pathname.startsWith(item.href));
+
             if (match) {
-                return `Dashboard / ${section.label} / ${match.label}`.toUpperCase();
+                return {
+                    title: match.title,
+                    icon: match.icon,
+                    breadcrumb: `DASHBOARD / ${section.label} / ${match.label}`.toUpperCase()
+                };
             }
         }
-        return "DASHBOARD";
-    };
 
+        // 3. Fallback (Nếu không tìm thấy - ví dụ trang 404 hoặc trang chưa define)
+        return {
+            title: "Dashboard",
+            icon: "ri-layout-grid-line",
+            breadcrumb: "DASHBOARD / PAGE"
+        };
+    }, [pathname]);
 
 
     return (
@@ -107,7 +124,7 @@ export default function dashboardLayout({ children }) {
             {/* --- SIDEBAR --- */}
             <aside className="w-72 h-full flex flex-col bg-white border-r border-neutral-200 shrink-0 z-20 overflow-hidden">
 
-                {/* User Profile Header */}
+                {/* User Profile Header - Fixed Top */}
                 <div className="p-8 pb-6 shrink-0">
                     <div className="flex items-center gap-4 mb-6">
                         <Avatar className="h-12 w-12 border border-neutral-200">
@@ -155,20 +172,19 @@ export default function dashboardLayout({ children }) {
                     <Separator className="bg-neutral-100" />
                 </div>
 
-                {/* Navigation Menu */}
+                {/* Navigation Menu - Scrollable Area */}
                 <div className="flex-1 min-h-0 w-full">
                     <ScrollArea className="h-full w-full px-4 py-6">
-
                         <div className="w-full space-y-2">
 
-                            {/* --- 1. DASHBOARD LINK (Single Item) --- */}
+                            {/* --- 1. DASHBOARD LINK --- */}
                             <Button
                                 asChild
                                 variant="ghost"
                                 className={`w-full justify-start px-3 h-11 transition-all duration-200 rounded-sm group
                                     ${pathname === '/dashboard'
-                                        ? 'bg-neutral-900 text-white shadow-sm hover:bg-neutral-800 hover:text-white' // Active style
-                                        : 'text-neutral-800 hover:bg-neutral-50' // Inactive style
+                                        ? 'bg-neutral-900 text-white shadow-sm hover:bg-neutral-800 hover:text-white'
+                                        : 'text-neutral-800 hover:bg-neutral-50'
                                     }
                                 `}
                             >
@@ -180,7 +196,7 @@ export default function dashboardLayout({ children }) {
                                 </Link>
                             </Button>
 
-                            {/* --- 2. ACCORDION MENU (Dropdown Items) --- */}
+                            {/* --- 2. ACCORDION MENU --- */}
                             <Accordion
                                 type="multiple"
                                 value={openItems}
@@ -188,7 +204,7 @@ export default function dashboardLayout({ children }) {
                                 className="w-full space-y-2"
                             >
                                 {MENU_ITEMS.map((section) => {
-                                    const isSectionActive = section.subItems.some(item => item.href === pathname);
+                                    const isSectionActive = section.subItems.some(item => pathname.startsWith(item.href));
                                     return (
                                         <AccordionItem key={section.id} value={section.id} className="border-b-0">
                                             <AccordionTrigger className="py-2 px-3 h-11 hover:bg-neutral-50 rounded-sm hover:no-underline group data-[state=open]:bg-neutral-50 transition-colors">
@@ -232,69 +248,47 @@ export default function dashboardLayout({ children }) {
                                 })}
                             </Accordion>
                         </div>
-
                     </ScrollArea>
                 </div>
 
+                {/* Footer Help - Fixed Bottom */}
                 <div className="p-4 shrink-0 bg-white border-t border-neutral-100">
                     <div className="bg-neutral-50 border border-neutral-200 rounded-sm p-4 space-y-3">
                         <div className="space-y-1">
                             <h4 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Need Helps?</h4>
                         </div>
-
                         <div className="space-y-2 pt-2 border-t border-neutral-200/50">
-                            <a href="mailto:support@vgc-agency.com" className="flex items-center gap-2 text-xs font-bold text-neutral-700 hover:text-black transition-colors group">
-                                <div className="w-5 h-5 bg-white border border-neutral-200 rounded-sm flex items-center justify-center text-neutral-400 group-hover:text-black group-hover:border-black transition-all">
+                            <div className="flex items-center gap-2 text-xs font-bold text-neutral-700">
+                                <div className="w-5 h-5 bg-white border border-neutral-200 rounded-sm flex items-center justify-center text-neutral-400">
                                     <i className="ri-mail-line text-[10px]"></i>
                                 </div>
                                 <span>info@vgcnews24.com</span>
-                            </a>
-
-                            <a href="tel:+15550000000" className="flex items-center gap-2 text-xs font-bold text-neutral-700 hover:text-black transition-colors group">
-                                <div className="w-5 h-5 bg-white border border-neutral-200 rounded-sm flex items-center justify-center text-neutral-400 group-hover:text-black group-hover:border-black transition-all">
-                                    <i className="ri-phone-fill text-[10px]"></i>
-                                </div>
-                                <span>+1 (678) 679-2347</span>
-                            </a>
-
-                            <Link
-                                href="/privacy-policy"
-                                className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
-                            >
-                                Privacy Policy
-                            </Link>
+                            </div>
                         </div>
                     </div>
                 </div>
             </aside>
+
+            {/* --- MAIN CONTENT --- */}
             <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-[#F8F8F8]">
+                {/* Header - Fixed Height */}
                 <header className="h-20 border-b border-neutral-200 bg-white flex flex-col justify-center px-8 shrink-0 z-10">
                     <div className="flex items-center gap-3">
-                        {(() => {
-                            for (const section of MENU_ITEMS) {
-                                const match = section.subItems.find(i => pathname.startsWith(i.href));
-                                if (match) {
-                                    return (
-                                        <>
-                                            <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center border border-neutral-200">
-                                                <i className={`${match.icon} text-xl text-neutral-700`}></i>
-                                            </div>
+                        <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center border border-neutral-200">
+                            <i className={`${activePageInfo.icon} text-xl text-neutral-700`}></i>
+                        </div>
 
-                                            <h1 className="text-xl font-semibold tracking-tight text-neutral-900">
-                                                {match.title}
-                                            </h1>
-                                        </>
-                                    );
-                                }
-                            }
-                        })()}
+                        <h1 className="text-xl font-semibold tracking-tight text-neutral-900">
+                            {activePageInfo.title}
+                        </h1>
                     </div>
 
                     <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-400 mt-1">
-                        {getBreadcrumb()}
+                        {activePageInfo.breadcrumb}
                     </div>
                 </header>
 
+                {/* Children Content - Scrollable */}
                 <div className="flex-1 overflow-y-auto p-8 scroll-smooth">
                     <div className="max-w-7xl mx-auto pb-10">
                         {children}
