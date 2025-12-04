@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,14 +13,12 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-
-// Import CSS RemixIcon
 import "remixicon/fonts/remixicon.css";
+import { getAllStates, getAllCategories } from '@/utils/ads/adsHandlers';
 
-// Định nghĩa các domain bắt buộc cho từng platform
 const PLATFORM_DOMAINS = {
     'Facebook': 'facebook.com',
-    'Twitter': ['twitter.com', 'x.com'], // Hỗ trợ cả tên miền cũ và mới
+    'Twitter': ['twitter.com', 'x.com'],
     'YouTube': ['youtube.com', 'youtu.be'],
     'LinkedIn': 'linkedin.com',
     'Instagram': 'instagram.com',
@@ -30,29 +28,45 @@ const PLATFORM_DOMAINS = {
 };
 
 export default function AdsCreatePage() {
-
-    // --- STATE ---
-    // Thêm trường error vào state để tracking lỗi
     const [socialLinks, setSocialLinks] = useState([]);
+
+    // State cho dữ liệu API
+    const [states, setStates] = useState([]);
+    const [categories, setCategories] = useState([]);
+
+    // Fetch dữ liệu khi mount
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [statesData, categoriesData] = await Promise.all([
+                    getAllStates(),
+                    getAllCategories()
+                ]);
+
+                if (Array.isArray(statesData)) setStates(statesData);
+                if (Array.isArray(categoriesData)) setCategories(categoriesData);
+            } catch (error) {
+                console.error("Failed to load initial data", error);
+            }
+        };
+        fetchData();
+    }, []);
 
     const addSocialLink = () => {
         setSocialLinks([...socialLinks, { platform: '', url: '', error: null }]);
     };
 
-    // Hàm kiểm tra tính hợp lệ của link
     const validateLink = (platform, url) => {
-        if (!url || !platform) return null; // Chưa nhập đủ thì chưa báo lỗi
+        if (!url || !platform) return null;
 
         const domains = PLATFORM_DOMAINS[platform];
         const lowerUrl = url.toLowerCase();
 
-        // Nếu domain là mảng (ví dụ Twitter/X), kiểm tra xem URL có chứa 1 trong các domain đó không
         if (Array.isArray(domains)) {
             const isValid = domains.some(domain => lowerUrl.includes(domain));
             return isValid ? null : `Link must belong to ${platform} (e.g., ${domains[0]})`;
         }
 
-        // Nếu domain là chuỗi đơn
         if (domains && !lowerUrl.includes(domains)) {
             return `Link must contain "${domains}"`;
         }
@@ -64,12 +78,8 @@ export default function AdsCreatePage() {
         const updated = [...socialLinks];
         const item = updated[index];
 
-        // Cập nhật giá trị
         item[field] = value;
 
-        // Thực hiện validate ngay khi nhập
-        // Nếu đang sửa URL: check với platform hiện tại
-        // Nếu đang sửa Platform: check với URL hiện tại
         const platformToCheck = field === 'platform' ? value : item.platform;
         const urlToCheck = field === 'url' ? value : item.url;
 
@@ -91,7 +101,6 @@ export default function AdsCreatePage() {
                     <h2 className="text-xl font-bold text-gray-900 mb-6">Post Settings</h2>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Status */}
                         <div className="space-y-2">
                             <Label className="text-sm font-medium text-gray-700">
                                 Status <span className="text-red-500">*</span>
@@ -108,7 +117,6 @@ export default function AdsCreatePage() {
                             </Select>
                         </div>
 
-                        {/* Job Position */}
                         <div className="space-y-2">
                             <Label className="text-sm font-medium text-gray-700">
                                 Job Position
@@ -119,7 +127,6 @@ export default function AdsCreatePage() {
                             />
                         </div>
 
-                        {/* Author Name */}
                         <div className="space-y-2">
                             <Label className="text-sm font-medium text-gray-700">
                                 Author Name
@@ -131,7 +138,6 @@ export default function AdsCreatePage() {
                             />
                         </div>
 
-                        {/* Show Email on Post */}
                         <div className="space-y-2">
                             <Label className="text-sm font-medium text-gray-700">
                                 Show Email on Post
@@ -147,7 +153,6 @@ export default function AdsCreatePage() {
                             </Select>
                         </div>
 
-                        {/* Applicant Requirements */}
                         <div className="col-span-1 md:col-span-2 space-y-2">
                             <Label className="text-sm font-medium text-gray-700">
                                 Applicant Requirements
@@ -173,19 +178,25 @@ export default function AdsCreatePage() {
                             <Input placeholder="Enter a descriptive title" className="bg-white border-gray-300" />
                         </div>
 
+                        {/* CATEGORY SELECT */}
                         <div className="space-y-2">
                             <Label className="text-sm font-medium text-gray-700">
                                 Category <span className="text-red-500">*</span>
                             </Label>
                             <Select>
-                                <SelectTrigger className="bg-white border-gray-300">
+                                {/* Thêm w-full vào đây */}
+                                <SelectTrigger className="w-full bg-white border-gray-300">
                                     <SelectValue placeholder="Select a category" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="jobs">Jobs</SelectItem>
-                                    <SelectItem value="real-estate">Real Estate</SelectItem>
-                                    <SelectItem value="services">Services</SelectItem>
-                                    <SelectItem value="items">For Sale</SelectItem>
+                                <SelectContent className="max-h-[300px]">
+                                    {categories.map((cat) => (
+                                        <SelectItem key={cat.id} value={cat.queryValue || cat.name}>
+                                            <div className="flex items-center gap-2">
+                                                <span>{cat.name}</span>
+                                                {cat.engName && <span className="text-gray-400 text-xs truncate max-w-[150px]">({cat.engName})</span>}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -242,18 +253,22 @@ export default function AdsCreatePage() {
                             <Input placeholder="City, neighborhood" className="bg-white border-gray-300" />
                         </div>
 
+                        {/* STATE SELECT */}
                         <div className="space-y-2">
                             <Label className="text-sm font-medium text-gray-700">
                                 State <span className="text-red-500">*</span>
                             </Label>
                             <Select>
-                                <SelectTrigger className="bg-white border-gray-300">
+                                {/* Thêm w-full vào đây */}
+                                <SelectTrigger className="w-full bg-white border-gray-300">
                                     <SelectValue placeholder="Select a state" />
                                 </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ca">California</SelectItem>
-                                    <SelectItem value="ny">New York</SelectItem>
-                                    <SelectItem value="tx">Texas</SelectItem>
+                                <SelectContent className="max-h-[300px]">
+                                    {states.map((st) => (
+                                        <SelectItem key={st.id} value={st.abbreviation}>
+                                            {st.name} ({st.abbreviation})
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -283,7 +298,7 @@ export default function AdsCreatePage() {
                     </div>
                 </div>
 
-                {/* 5. SOCIAL MEDIA CONTACTS - WITH VALIDATION */}
+                {/* 5. SOCIAL MEDIA CONTACTS */}
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
                     <div className="flex flex-row items-center justify-between mb-6">
                         <h2 className="text-xl font-bold text-gray-900">Social Media Contacts</h2>
@@ -307,7 +322,6 @@ export default function AdsCreatePage() {
                             {socialLinks.map((item, idx) => (
                                 <div key={idx} className="flex flex-col gap-1">
                                     <div className="flex gap-3 items-start">
-                                        {/* SELECT PLATFORM */}
                                         <Select
                                             value={item.platform}
                                             onValueChange={(value) => updateSocialLink(idx, "platform", value)}
@@ -327,7 +341,6 @@ export default function AdsCreatePage() {
                                             </SelectContent>
                                         </Select>
 
-                                        {/* URL INPUT */}
                                         <div className="flex-1">
                                             <Input
                                                 value={item.url}
@@ -337,7 +350,6 @@ export default function AdsCreatePage() {
                                             />
                                         </div>
 
-                                        {/* DELETE BUTTON */}
                                         <Button
                                             type="button"
                                             variant="ghost"
@@ -348,7 +360,6 @@ export default function AdsCreatePage() {
                                         </Button>
                                     </div>
 
-                                    {/* ERROR MESSAGE */}
                                     {item.error && (
                                         <div className="text-red-500 text-xs flex items-center gap-1 ml-[192px]">
                                             <i className="ri-error-warning-fill"></i>
@@ -380,9 +391,8 @@ export default function AdsCreatePage() {
                     </div>
                 </div>
 
-                {/* FOOTER ACTIONS */}
                 <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
-                    <Link href="/home">
+                    <Link href="/dashboard">
                         <Button type="button" variant="ghost" className="text-gray-600 hover:text-gray-900">
                             Cancel
                         </Button>

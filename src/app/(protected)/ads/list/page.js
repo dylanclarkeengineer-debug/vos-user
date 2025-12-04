@@ -123,8 +123,8 @@ export default function AdsListPage() {
     const currentData = ALL_DATA.slice(startIndex, endIndex);
 
     // --- HANDLERS ---
-    const handleEdit = (id) => router.push(`/home/ads/create?edit=${id}`);
-    const handleDuplicate = (id) => router.push(`/home/ads/create?copy=${id}`);
+    const handleEdit = (id) => router.push(`/ads/create?edit=${id}`);
+    const handleDuplicate = (id) => router.push(`/ads/create?copy=${id}`);
     const handlePauseClick = (ad) => { setSelectedAd(ad); setIsDeleteOpen(true); };
     const handlePromoteClick = (ad) => { setSelectedAd(ad); setIsPromoteOpen(true); };
     const onPromoteConfirm = (option) => { setIsPromoteOpen(false); };
@@ -163,7 +163,7 @@ export default function AdsListPage() {
                 <div className="flex gap-2 w-full lg:w-auto ml-auto">
                     <Select defaultValue="all"><SelectTrigger className="w-[140px] h-10 bg-white"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">All Status</SelectItem></SelectContent></Select>
                     <Select defaultValue="date"><SelectTrigger className="w-[140px] h-10 bg-white"><SelectValue placeholder="All Dates" /></SelectTrigger><SelectContent><SelectItem value="date">All Dates</SelectItem></SelectContent></Select>
-                    <Link href="/home/ads/create">
+                    <Link href="/ads/create">
                         <Button className="h-10 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6">
                             <i className="ri-add-line mr-2"></i> Create New Ad
                         </Button>

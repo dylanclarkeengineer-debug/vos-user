@@ -16,10 +16,10 @@ function cn(...inputs) {
 
 // --- MOCK DATA: MENU ITEMS ---
 const NAV_ITEMS = [
-    { name: "Store", href: "/dashboard/account/billing", icon: "ri-store-2-line" },
-    { name: "Top Up", href: "/dashboard/account/billing/payment", icon: "ri-coins-line" },
-    { name: "History", href: "/dashboard/account/billing/history", icon: "ri-history-line" },
-    { name: "Refunds", href: "/dashboard/account/billing/refunds", icon: "ri-exchange-dollar-line" },
+    { name: "Store", href: "/account/billing", icon: "ri-store-2-line" },
+    { name: "Top Up", href: "/account/billing/payment", icon: "ri-coins-line" },
+    { name: "History", href: "/account/billing/history", icon: "ri-history-line" },
+    { name: "Refunds", href: "/account/billing/refunds", icon: "ri-exchange-dollar-line" },
 ];
 
 // --- MOCK DATA: USER ---
@@ -85,7 +85,7 @@ export default function PricingLayout({ children }) {
                                         <i className="ri-copper-coin-fill text-yellow-500 text-sm"></i>
                                     </div>
                                 </div>
-                                <Link href="/dashboard/billing/payment-methods" className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 hover:scale-105 transition-all shadow-md">
+                                <Link href="/billing/payment-methods" className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 hover:scale-105 transition-all shadow-md">
                                     <i className="ri-add-line text-lg"></i>
                                 </Link>
                             </div>
@@ -131,7 +131,7 @@ export default function PricingLayout({ children }) {
                             {/* SỬA LỖI HYDRATION: Thêm 'en-US' */}
                             <span>Balance: {MOCK_USER.points.toLocaleString('en-US')} Pts</span>
                         </div>
-                        <Link href="/dashboard/billing/payment-methods" className="text-[10px] font-bold bg-indigo-600 text-white px-3 py-1 rounded-full uppercase tracking-wider">
+                        <Link href="/billing/payment-methods" className="text-[10px] font-bold bg-indigo-600 text-white px-3 py-1 rounded-full uppercase tracking-wider">
                             Top Up
                         </Link>
                     </div>

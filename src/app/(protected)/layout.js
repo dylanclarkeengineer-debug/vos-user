@@ -4,11 +4,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Inter } from 'next/font/google';
-
-// Import CSS RemixIcon
+import { useAuth } from '@/context/authContext';
 import 'remixicon/fonts/remixicon.css'
-
-// Import ShadCN UI Components
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,59 +17,61 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 
-// 1. Cấu hình Font Inter
 const inter = Inter({ subsets: ['latin'] });
 
-// 2. Dữ liệu Menu
 const MENU_ITEMS = [
     {
         id: "ads",
         label: "Advertising",
         icon: "ri-megaphone-line",
         subItems: [
-            { label: "Create New Post", icon: "ri-add-line", href: "/dashboard/ads/create", title: "Create New Classified Post" },
-            { label: "My Posted Ads", icon: "ri-file-list-line", href: "/dashboard/ads/list", title: "My Posted Ads" },
-            { label: "Favorite Ads", icon: "ri-heart-line", href: "/dashboard/ads/favorites", title: "Favorite Ads" },
-            { label: "Job Suggestions", icon: "ri-lightbulb-line", href: "/dashboard/ads/suggestions", title: "Job Suggestions" },
-            { label: "Applied Jobs", icon: "ri-briefcase-line", href: "/dashboard/ads/applied", title: "Applied Jobs" },
-        ]
+            { label: "Create New Post", icon: "ri-add-line", href: "/ads/create", title: "Create New Classified Post" },
+            { label: "My Posted Ads", icon: "ri-file-list-line", href: "/ads/list", title: "My Posted Ads" },
+            { label: "Favorite Ads", icon: "ri-heart-line", href: "/ads/favorites", title: "Favorite Ads" },
+            { label: "Job Suggestions", icon: "ri-lightbulb-line", href: "/ads/suggestions", title: "Job Suggestions" },
+            { label: "Applied Jobs", icon: "ri-briefcase-line", href: "/ads/applied", title: "Applied Jobs" },
+        ],
+        caption: "Việc làm & rao vặt"
     },
     {
         id: "business",
         label: "Business Hub",
         icon: "ri-building-line",
         subItems: [
-            { label: "Create Business", icon: "ri-add-circle-line", href: "/dashboard/business/create", title: "Create New Business" },
-            { label: "My Businesses", icon: "ri-store-2-line", href: "/dashboard/business/list", title: "My Businesses" },
-            { label: "Analytics", icon: "ri-bar-chart-2-line", href: "/dashboard/business/analytics", title: "Business Analytics" },
-        ]
+            { label: "Create Business", icon: "ri-add-circle-line", href: "/business/create", title: "Create New Business" },
+            { label: "My Businesses", icon: "ri-store-2-line", href: "/business/list", title: "My Businesses" },
+            { label: "Analytics", icon: "ri-bar-chart-2-line", href: "/business/analytics", title: "Business Analytics" },
+        ],
+        caption: "Quản lý và doanh nghiệp"
     },
     {
         id: "news",
         label: "Editorial News",
         icon: "ri-newspaper-line",
         subItems: [
-            { label: "Latest Feed", icon: "ri-rss-line", href: "/dashboard/news/feed", title: "Latest News Feed" },
-            { label: "Bookmarks", icon: "ri-bookmark-line", href: "/dashboard/news/bookmarks", title: "Bookmarked News" },
-        ]
+            { label: "Latest Feed", icon: "ri-rss-line", href: "/news/feed", title: "Latest News Feed" },
+            { label: "Bookmarks", icon: "ri-bookmark-line", href: "/news/bookmarks", title: "Bookmarked News" },
+        ],
+        caption: "Tin tức & bài viết"
     },
     {
         id: "account",
         label: "Account",
         icon: "ri-user-settings-line",
         subItems: [
-            { label: "Profile Settings", icon: "ri-settings-4-line", href: "/dashboard/account/profile", title: "Profile Settings" },
-            { label: "Security", icon: "ri-shield-keyhole-line", href: "/dashboard/account/security", title: "Security Settings" },
-            { label: "Billing & Payments", icon: "ri-wallet-line", href: "/dashboard/account/billing", title: "Billing & Payments" },
-        ]
+            { label: "Profile Settings", icon: "ri-settings-4-line", href: "/account/profile", title: "Profile Settings" },
+            { label: "Security", icon: "ri-shield-keyhole-line", href: "/account/security", title: "Security Settings" },
+            { label: "Billing & Payments", icon: "ri-wallet-line", href: "/account/billing", title: "Billing & Payments" },
+        ],
+        caption: "Cài đặt tài khoản"
     }
 ];
 
 export default function DashboardLayout({ children }) {
     const pathname = usePathname();
     const [openItems, setOpenItems] = useState([]);
+    const { user } = useAuth();
 
-    // --- 1. Tự động mở Accordion Menu khi reload trang ---
     useEffect(() => {
         const activeSectionId = MENU_ITEMS.find(section =>
             section.subItems.some(item => pathname.startsWith(item.href))
@@ -83,19 +82,14 @@ export default function DashboardLayout({ children }) {
         }
     }, [pathname]);
 
-    // --- 2. LOGIC QUAN TRỌNG: Tính toán thông tin Header ---
-    // Dùng useMemo để luôn trả về giá trị, không bao giờ undefined
     const activePageInfo = useMemo(() => {
-        // Trường hợp trang chủ Dashboard
         if (pathname === '/dashboard') {
             return {
                 title: "Dashboard Overview",
                 icon: "ri-dashboard-line",
-                breadcrumb: "DASHBOARD"
+                breadcrumb: "Dashboard"
             };
         }
-
-        // Tìm trong danh sách Menu xem trang hiện tại có khớp không
         for (const section of MENU_ITEMS) {
             const match = section.subItems.find(item => pathname.startsWith(item.href));
 
@@ -103,36 +97,33 @@ export default function DashboardLayout({ children }) {
                 return {
                     title: match.title,
                     icon: match.icon,
-                    breadcrumb: `DASHBOARD / ${section.label} / ${match.label}`.toUpperCase()
+                    breadcrumb: `Dashboard / ${section.label} / ${match.label}`
                 };
             }
         }
 
-        // FALLBACK: Nếu không tìm thấy (ví dụ trang mới tạo chưa khai báo), trả về mặc định
-        // Đây chính là phần giúp Header không bị biến mất
         return {
             title: "Dashboard",
             icon: "ri-layout-grid-line",
-            breadcrumb: "DASHBOARD / PAGE"
+            breadcrumb: "Dashboard / Page"
         };
     }, [pathname]);
 
     return (
         <div className={`fixed inset-0 flex h-screen w-full bg-[#F8F8F8] font-sans text-neutral-900 selection:bg-neutral-900 selection:text-white overflow-hidden ${inter.className}`}>
 
-            {/* --- SIDEBAR --- */}
             <aside className="w-72 h-full flex flex-col bg-white border-r border-neutral-200 shrink-0 z-20 overflow-hidden">
-
-                {/* User Profile */}
                 <div className="p-8 pb-6 shrink-0">
                     <div className="flex items-center gap-4 mb-6">
                         <Avatar className="h-12 w-12 border border-neutral-200">
                             <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-                            <AvatarFallback className="bg-neutral-900 text-white font-bold">JD</AvatarFallback>
+                            <AvatarFallback className="bg-neutral-900 text-white font-bold">
+                                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                            </AvatarFallback>
                         </Avatar>
                         <div className="overflow-hidden">
                             <h3 className="text-lg font-bold text-neutral-900 leading-tight truncate">
-                                John Doe
+                                {user?.name || 'John Doe'}
                             </h3>
                             <p className="text-[10px] uppercase tracking-widest text-neutral-500 font-medium">
                                 Premium Member
@@ -145,10 +136,10 @@ export default function DashboardLayout({ children }) {
                             asChild
                             variant="outline"
                             className={`w-full h-9 text-xs uppercase tracking-wider font-bold rounded-sm border-neutral-200 transition-all 
-                                ${pathname === '/dashboard/account/profile' ? 'bg-neutral-900 text-white border-neutral-900' : 'hover:bg-neutral-50 hover:text-black'}
+                                ${pathname === '/account/profile' ? 'bg-neutral-900 text-white border-neutral-900' : 'hover:bg-neutral-50 hover:text-black'}
                             `}
                         >
-                            <Link href="/dashboard/account/profile">
+                            <Link href="/account/profile">
                                 <i className="ri-settings-3-line mr-2 text-sm"></i> Profile
                             </Link>
                         </Button>
@@ -157,10 +148,10 @@ export default function DashboardLayout({ children }) {
                             asChild
                             variant="outline"
                             className={`w-full h-9 text-xs uppercase tracking-wider font-bold rounded-sm border-neutral-200 transition-all 
-                                ${pathname === '/dashboard/account/billing' ? 'bg-neutral-900 text-white border-neutral-900' : 'hover:bg-neutral-50 hover:text-black'}
+                                ${pathname === '/account/billing' ? 'bg-neutral-900 text-white border-neutral-900' : 'hover:bg-neutral-50 hover:text-black'}
                             `}
                         >
-                            <Link href="/dashboard/account/billing">
+                            <Link href="/account/billing">
                                 <i className="ri-wallet-3-line mr-2 text-sm"></i> Billing
                             </Link>
                         </Button>
@@ -171,11 +162,9 @@ export default function DashboardLayout({ children }) {
                     <Separator className="bg-neutral-100" />
                 </div>
 
-                {/* Navigation Menu */}
                 <div className="flex-1 min-h-0 w-full">
                     <ScrollArea className="h-full w-full px-4 py-6">
                         <div className="w-full space-y-2">
-                            {/* Dashboard Link */}
                             <Button
                                 asChild
                                 variant="ghost"
@@ -194,7 +183,6 @@ export default function DashboardLayout({ children }) {
                                 </Link>
                             </Button>
 
-                            {/* Accordion Menu */}
                             <Accordion
                                 type="multiple"
                                 value={openItems}
@@ -205,14 +193,20 @@ export default function DashboardLayout({ children }) {
                                     const isSectionActive = section.subItems.some(item => pathname.startsWith(item.href));
                                     return (
                                         <AccordionItem key={section.id} value={section.id} className="border-b-0">
-                                            <AccordionTrigger className="py-2 px-3 h-11 hover:bg-neutral-50 rounded-sm hover:no-underline group data-[state=open]:bg-neutral-50 transition-colors">
-                                                <div className="flex items-center gap-3 text-neutral-800">
-                                                    <span className={`transition-colors ${isSectionActive ? 'text-black' : 'text-neutral-500 group-hover:text-black'}`}>
+                                            {/* SỬA ĐỔI TẠI ĐÂY: Thêm caption bên dưới label */}
+                                            <AccordionTrigger className="py-3 px-3 h-auto min-h-[44px] hover:bg-neutral-50 rounded-sm hover:no-underline group data-[state=open]:bg-neutral-50 transition-colors">
+                                                <div className="flex items-center gap-3 text-neutral-800 text-left">
+                                                    <span className={`transition-colors flex-shrink-0 ${isSectionActive ? 'text-black' : 'text-neutral-500 group-hover:text-black'}`}>
                                                         <i className={`${section.icon} text-lg`}></i>
                                                     </span>
-                                                    <span className={`font-medium text-base tracking-tight ${isSectionActive ? 'text-black font-bold' : ''}`}>
-                                                        {section.label}
-                                                    </span>
+                                                    <div className="flex flex-col">
+                                                        <span className={`font-medium text-base tracking-tight leading-none mb-1 ${isSectionActive ? 'text-black font-bold' : ''}`}>
+                                                            {section.label}
+                                                        </span>
+                                                        <span className="text-[10px] text-neutral-400 font-normal leading-tight">
+                                                            {section.caption}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </AccordionTrigger>
 
@@ -249,7 +243,6 @@ export default function DashboardLayout({ children }) {
                     </ScrollArea>
                 </div>
 
-                {/* Footer Help */}
                 <div className="p-4 shrink-0 bg-white border-t border-neutral-100">
                     <div className="bg-neutral-50 border border-neutral-200 rounded-sm p-4 space-y-3">
                         <div className="space-y-1">
@@ -262,14 +255,26 @@ export default function DashboardLayout({ children }) {
                                 </div>
                                 <span>info@vgcnews24.com</span>
                             </div>
+
+                            <div className="flex items-center gap-2 text-xs font-bold text-neutral-700">
+                                <div className="w-5 h-5 bg-white border border-neutral-200 rounded-sm flex items-center justify-center text-neutral-400">
+                                    <i className="ri-phone-line text-[10px]"></i>
+                                </div>
+                                <span>+1 (678) 679-2347</span>
+                            </div>
+
+                            <Link href="/privacy-policy" className="flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">
+                                <div className="w-5 h-5 bg-white border border-blue-200 rounded-sm flex items-center justify-center text-blue-600">
+                                    <i className="ri-shield-check-line text-[10px]"></i>
+                                </div>
+                                <span>Privacy Policy</span>
+                            </Link>
                         </div>
                     </div>
                 </div>
             </aside>
 
-            {/* --- MAIN CONTENT --- */}
             <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-[#F8F8F8]">
-                {/* Header: SỬ DỤNG activePageInfo ĐÃ TÍNH TOÁN Ở TRÊN */}
                 <header className="h-20 border-b border-neutral-200 bg-white flex flex-col justify-center px-8 shrink-0 z-10">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center border border-neutral-200">
@@ -280,8 +285,7 @@ export default function DashboardLayout({ children }) {
                             {activePageInfo.title}
                         </h1>
                     </div>
-
-                    <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-neutral-400 mt-1">
+                    <div className="text-xs font-medium text-neutral-500 mt-1">
                         {activePageInfo.breadcrumb}
                     </div>
                 </header>

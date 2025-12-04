@@ -89,11 +89,11 @@ export default function BusinessListPage() {
 
     // --- ACTIONS HANDLERS ---
     const handleEdit = (id) => {
-        router.push(`/home/business/create?edit=${id}`);
+        router.push(`/business/create?edit=${id}`);
     };
 
     const handleDuplicate = (id) => {
-        router.push(`/home/business/create?copy=${id}`);
+        router.push(`/business/create?copy=${id}`);
     };
 
     const handlePromote = (biz) => {

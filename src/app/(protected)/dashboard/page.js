@@ -4,8 +4,10 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from '@/context/authContext';
 
 export default function HomePage() {
+    const { user } = useAuth();
     return (
         <div className="space-y-8 animate-fade-in pb-10">
 
@@ -19,7 +21,7 @@ export default function HomePage() {
 
                     <div className="relative z-10 flex justify-between items-center">
                         <div>
-                            <h1 className=" font-bold text-3xl mb-2 tracking-tight">Welcome back, Minh!</h1>
+                            <h1 className=" font-bold text-3xl mb-2 tracking-tight">Welcome back, {user?.name || 'Minh'}!</h1>
                             <p className="text-neutral-400 text-sm font-medium tracking-wide">
                                 Manage your community presence and analytics from your dashboard.
                             </p>
