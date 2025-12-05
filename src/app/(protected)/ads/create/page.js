@@ -68,9 +68,25 @@ export default function AdsCreatePage() {
   }
 
   const handlePositionSelect = (pos) => {
-    // Nếu pos là object {en:..., vi:...} thì lấy vi hoặc en tùy ngôn ngữ, ở đây lấy chuỗi hiển thị
+    // Lấy tên hiển thị (ưu tiên tiếng Việt)
     const positionName = typeof pos === 'object' ? (pos.vi || pos.en) : pos
-    setFormData(prev => ({ ...prev, position: positionName }))
+
+    setFormData(prev => {
+      // 1. Tách chuỗi hiện tại thành mảng các vị trí (dựa trên dấu phẩy)
+      let currentPositions = prev.position
+        ? prev.position.split(',').map(p => p.trim()).filter(Boolean)
+        : []
+
+      // 2. Logic Toggle: Nếu đã có thì xóa, chưa có thì thêm
+      if (currentPositions.includes(positionName)) {
+        currentPositions = currentPositions.filter(p => p !== positionName)
+      } else {
+        currentPositions.push(positionName)
+      }
+
+      // 3. Nối lại thành chuỗi và cập nhật state
+      return { ...prev, position: currentPositions.join(', ') }
+    })
   }
 
   // ... (Giữ nguyên các hàm xử lý ảnh và social link cũ: fileToBase64, handleImageChange, removeImage, social link logic...)
@@ -80,40 +96,53 @@ export default function AdsCreatePage() {
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files)
 
-    // Gọi hàm kiểm tra từ file utility
+    // Validate (giữ nguyên logic cũ)
     const validation = validateImages(images, files);
-
-    // Nếu không hợp lệ, hiện thông báo và dừng lại
     if (!validation.isValid) {
       alert(validation.message);
-      // Reset input để người dùng có thể chọn lại file đó nếu muốn (trường hợp chọn sai lần đầu)
       e.target.value = '';
       return;
     }
 
-    // Nếu hợp lệ, tiến hành tạo preview và lưu vào state
-    const newImages = files.map(file => ({
+    // Tạo object ảnh mới
+    const newImages = files.map((file, idx) => ({
       file,
-      preview: URL.createObjectURL(file)
+      preview: URL.createObjectURL(file),
+      // Nếu danh sách hiện tại rỗng và đây là ảnh đầu tiên trong mảng upload -> set là Main
+      // Ngược lại set là false
+      isMain: images.length === 0 && idx === 0
     }))
-
-    const removeImage = (index) => {
-      setImages(prev => {
-        const newImages = [...prev]
-        // Giải phóng URL preview để tránh leak memory
-        URL.revokeObjectURL(newImages[index].preview)
-        // Xóa phần tử tại vị trí index
-        newImages.splice(index, 1)
-        return newImages
-      })
-    }
 
     setImages(prev => [...prev, ...newImages])
     e.target.value = ''
   }
+
+  const handleSetMainImage = (indexToSet) => {
+    setImages(prev => prev.map((img, idx) => ({
+      ...img,
+      isMain: idx === indexToSet
+    })))
+  }
+
   const removeImage = (index) => {
     setImages(prev => {
-      const newImgs = [...prev]; URL.revokeObjectURL(newImgs[index].preview); newImgs.splice(index, 1); return newImgs;
+      const newImgs = [...prev];
+
+      // Revoke URL để tránh memory leak
+      URL.revokeObjectURL(newImgs[index].preview);
+
+      // Kiểm tra xem ảnh bị xóa có phải là Main không
+      const isDeletingMain = newImgs[index].isMain;
+
+      // Xóa ảnh
+      newImgs.splice(index, 1);
+
+      // Nếu vừa xóa ảnh Main và danh sách vẫn còn ảnh, set ảnh đầu tiên thành Main mới
+      if (isDeletingMain && newImgs.length > 0) {
+        newImgs[0].isMain = true;
+      }
+
+      return newImgs;
     });
   };
 
@@ -160,7 +189,8 @@ export default function AdsCreatePage() {
     return null
   }
 
-  const handleSubmit = async (e) => {
+  // Thêm tham số targetStatus vào hàm
+  const handleSubmit = async (e, targetStatus) => {
     e.preventDefault()
     if (!user || !user.user_id) { alert("Please login first!"); return; }
 
@@ -170,10 +200,10 @@ export default function AdsCreatePage() {
     setIsLoading(true)
 
     try {
-      const processedImages = await Promise.all(images.map(async (img, index) => ({
+      const processedImages = await Promise.all(images.map(async (img) => ({
         imageName: img.file.name,
         imageFile: await fileToBase64(img.file),
-        isMain: index === 0
+        isMain: img.isMain || false
       })))
 
       const socialLinksObj = socialLinks.reduce((acc, curr) => {
@@ -190,18 +220,19 @@ export default function AdsCreatePage() {
           title: formData.title,
           position: formData.position,
           category: selectedCategory,
-          status: formData.status, // 'active' or 'private'
+          label: formData.label,
+
+          // --- SỬA Ở ĐÂY: Dùng targetStatus thay vì formData.status ---
+          status: targetStatus,
+          // -----------------------------------------------------------
+
           requirement: formData.applicantReq,
           description: formData.description,
-
-          // Configs
+          // ... (giữ nguyên các trường còn lại)
           is_show_location: formData.showLocation === 'yes',
           is_show_email: formData.showEmail === 'yes',
           is_show_phone_number: formData.showPhone === 'yes',
-
-          // Part 3: Admin Only Field
           manual_entry_source: (user.role === 'admin' || user.role === 'moderator') ? formData.manualEntrySource : "",
-
           contact_info: {
             author: formData.authorName,
             phone: formData.contactPhone,
@@ -219,12 +250,11 @@ export default function AdsCreatePage() {
             zipcode: formData.zipcode,
             latitude: 0, longitude: 0
           },
-          // Part 2: Sales Info (Optional)
           sales_info: selectedCategory === 'Business' ? {
             asking_price: formData.bizSalePrice,
             cash_flow: formData.bizCashFlow,
             gross_revenue: Number(formData.bizGrossRevenue) || 0,
-            rent: Number(formData.bizLeasePrice) || 0, // Mapping lease price to rent
+            rent: Number(formData.bizLeasePrice) || 0,
             lease_expiration: formData.bizLeaseExpiration,
             reason_for_selling: formData.bizReason,
             employees: Number(formData.bizEmployees) || 0,
@@ -284,7 +314,7 @@ export default function AdsCreatePage() {
       )}
 
       <div className="animate-fade-in mx-auto max-w-5xl space-y-6 pt-0 pb-16">
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-6">
 
           {/* GLOBAL SETTINGS */}
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -292,19 +322,14 @@ export default function AdsCreatePage() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {/* Status */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Status <span className="text-red-500">*</span></Label>
-                <Select value={formData.status} onValueChange={(val) => handleInputChange('status', val)}>
-                  <SelectTrigger className="w-full border-gray-300 bg-white"><SelectValue placeholder="Select status" /></SelectTrigger>
+                <Label className="text-sm font-medium text-gray-700">Label <span className="text-red-500">*</span></Label>
+                <Select value={formData.label} onValueChange={(val) => handleInputChange('label', val)}>
+                  <SelectTrigger className="w-full border-gray-300 bg-white"><SelectValue placeholder="Select label" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Public</SelectItem>
                     <SelectItem value="private">Private</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              {/* Author Name */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Author Name</Label>
-                <Input placeholder="Your name" className="border-gray-300 bg-white" value={formData.authorName} onChange={(e) => handleInputChange('authorName', e.target.value)} />
               </div>
               {/* Show Email */}
               <div className="space-y-2">
@@ -333,6 +358,16 @@ export default function AdsCreatePage() {
             </div>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {/* Author Name */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">Author Name</Label>
+                <Input placeholder="Your name" className="border-gray-300 bg-white" value={formData.authorName} onChange={(e) => handleInputChange('authorName', e.target.value)} />
+              </div>
+              {/* Salary Range */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-gray-700">Salary Range</Label>
+                <Input placeholder="e.g. $3000 - $5000" className="border-gray-300 bg-white" value={formData.priceSalary} onChange={(e) => handleInputChange('priceSalary', e.target.value)} />
+              </div>
               {/* Title */}
               <div className="col-span-1 space-y-2 md:col-span-2">
                 <Label className="text-sm font-medium text-gray-700">Title (Min 10 chars) <span className="text-red-500">*</span></Label>
@@ -342,8 +377,15 @@ export default function AdsCreatePage() {
               {/* Category */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Category <span className="text-red-500">*</span></Label>
-                <Select onValueChange={(val) => setSelectedCategory(val)}>
-                  <SelectTrigger className="h-auto w-full border-gray-300 bg-white py-2.5"><SelectValue placeholder="Select a category" /></SelectTrigger>
+                <Select
+                  onValueChange={(val) => {
+                    setSelectedCategory(val);       // 1. Cập nhật Category mới
+                    handleInputChange('position', ''); // 2. Reset Position về rỗng
+                  }}
+                >
+                  <SelectTrigger className="h-auto w-full border-gray-300 bg-white py-2.5">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.queryValue || cat.name} className="h-auto py-3 items-start cursor-pointer">
@@ -360,39 +402,44 @@ export default function AdsCreatePage() {
               {/* Position + Suggestions */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Position / Sub-Title</Label>
-                <Input placeholder="e.g. Nail Technician" className="border-gray-300 bg-white mb-2" value={formData.position} onChange={(e) => handleInputChange('position', e.target.value)} />
+
+                {/* Input hiển thị các vị trí đã chọn, user vẫn có thể gõ thêm thủ công */}
+                <Input
+                  placeholder="e.g. Nail Technician, Receptionist"
+                  className="border-gray-300 bg-white mb-2"
+                  value={formData.position}
+                  onChange={(e) => handleInputChange('position', e.target.value)}
+                />
 
                 {/* Position Chips Suggestion */}
                 {currentCategoryObj && currentCategoryObj.positions_suggestion && (
                   <div className="flex flex-wrap gap-2">
                     {currentCategoryObj.positions_suggestion.map((pos, idx) => {
-                      const label = typeof pos === 'object' ? pos.vi : pos; // Ưu tiên tiếng Việt
+                      const label = typeof pos === 'object' ? pos.vi : pos;
+
+                      // Kiểm tra xem label này đã nằm trong chuỗi input chưa
+                      const isSelected = formData.position
+                        .split(',')
+                        .map(s => s.trim())
+                        .includes(label);
+
                       return (
                         <span
                           key={idx}
                           onClick={() => handlePositionSelect(pos)}
-                          className="cursor-pointer rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-blue-100 hover:text-blue-700 transition-colors"
+                          className={`cursor-pointer rounded-full px-3 py-1 text-xs font-medium transition-colors border
+                            ${isSelected
+                              ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' // Style khi ĐƯỢC chọn
+                              : 'bg-gray-100 text-gray-600 border-transparent hover:bg-blue-100 hover:text-blue-700' // Style khi CHƯA chọn
+                            }`}
                         >
-                          {label}
+                          {label} {isSelected && <i className="ri-check-line ml-1"></i>}
                         </span>
                       )
                     })}
                   </div>
                 )}
-              </div>
-
-              {/* Salary Range (Only if not Business) */}
-              {selectedCategory !== 'Business' && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Salary Range</Label>
-                  <Input placeholder="e.g. $3000 - $5000" className="border-gray-300 bg-white" value={formData.priceSalary} onChange={(e) => handleInputChange('priceSalary', e.target.value)} />
-                </div>
-              )}
-
-              {/* Requirement */}
-              <div className="col-span-1 space-y-2 md:col-span-2">
-                <Label className="text-sm font-medium text-gray-700">Applicant Requirements</Label>
-                <Textarea placeholder="List requirements..." className="min-h-[100px] resize-y border-gray-300 bg-white" value={formData.applicantReq} onChange={(e) => handleInputChange('applicantReq', e.target.value)} />
+                <p className="text-[10px] text-gray-500">Click multiple tags to combine them.</p>
               </div>
 
               {/* Description */}
@@ -400,6 +447,14 @@ export default function AdsCreatePage() {
                 <Label className="text-sm font-medium text-gray-700">Description (Min 30 chars, no bad words) <span className="text-red-500">*</span></Label>
                 <Textarea placeholder="Provide detailed information..." className="min-h-[150px] resize-y border-gray-300 bg-white" value={formData.description} onChange={(e) => handleInputChange('description', e.target.value)} required />
               </div>
+
+              {/* Requirement */}
+              <div className="col-span-1 space-y-2 md:col-span-2">
+                <Label className="text-sm font-medium text-gray-700">Applicant Requirements</Label>
+                <Textarea placeholder="List requirements..." className="min-h-[100px] resize-y border-gray-300 bg-white" value={formData.applicantReq} onChange={(e) => handleInputChange('applicantReq', e.target.value)} />
+              </div>
+
+
             </div>
           </div>
 
@@ -408,7 +463,7 @@ export default function AdsCreatePage() {
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm animate-fade-in">
               <div className="mb-6 border-b border-gray-100 pb-4">
                 <h2 className="text-xl font-bold text-gray-900">Sales Information</h2>
-                <p className="text-sm text-gray-500">Specific details for business opportunities.</p>
+                <p className="text-sm text-gray-500">Define the transfer price, deposit amount, and payment conditions.</p>
               </div>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-2">
@@ -480,11 +535,33 @@ export default function AdsCreatePage() {
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Contact Phone <span className="text-red-500">*</span></Label>
-                <PhoneInput placeholder="(555) 123-4567" className="border-gray-300 bg-white" value={formData.contactPhone} onChange={(value) => handleInputChange('contactPhone', value)} required />
+                <PhoneInput
+                  defaultCountry="US" // 1. Mặc định cờ Mỹ
+                  placeholder="(555) 123-4567"
+                  className="border-gray-300 bg-white"
+                  value={formData.contactPhone}
+                  onChange={(value) => {
+                    if (value && value.length > 12) return;
+
+                    handleInputChange('contactPhone', value);
+                  }}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Secondary Phone (Optional)</Label>
-                <PhoneInput placeholder="(555) 987-6543" className="border-gray-300 bg-white" value={formData.secondaryPhone} onChange={(value) => handleInputChange('secondaryPhone', value)} />
+                <PhoneInput
+                  defaultCountry="US" // 1. Mặc định cờ Mỹ
+                  placeholder="(555) 987-6543"
+                  className="border-gray-300 bg-white"
+                  value={formData.secondaryPhone}
+                  onChange={(value) => {
+                    // 2. Logic limit 10 số tương tự
+                    if (value && value.length > 12) return;
+
+                    handleInputChange('secondaryPhone', value);
+                  }}
+                />
               </div>
               {/* Location fields */}
               <div className="space-y-2">
@@ -502,6 +579,63 @@ export default function AdsCreatePage() {
                 <Label className="text-sm font-medium text-gray-700">Zip Code</Label>
                 <Input placeholder="90210" className="border-gray-300 bg-white" value={formData.zipcode} onChange={(e) => handleInputChange('zipcode', e.target.value)} />
               </div>
+              <div className='space-y-2'>
+                <Label className="text-sm font-medium text-gray-700">Website</Label>
+                <Input placeholder="https://yourwebsite.com" className="border-gray-300 bg-white" value={formData.website} onChange={(e) => handleInputChange('website', e.target.value)} />
+              </div>
+            </div>
+            {/* 5. SOCIAL MEDIA (Rút gọn hiển thị) */}
+            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm mt-8">
+              <div className="mb-4 flex flex-row items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Social Media</h2>
+                <Button type="button" onClick={addSocialLink} variant="outline" size="sm">Add Link</Button>
+              </div>
+
+              {socialLinks.length === 0 && (
+                <p className="text-sm text-gray-400 text-center py-4">No social links added yet.</p>
+              )}
+
+              {socialLinks.map((item, idx) => (
+                <div key={idx} className="flex flex-col gap-1 mb-3">
+                  <div className="flex gap-2">
+                    {/* Select Platform */}
+                    <Select
+                      value={item.platform}
+                      onValueChange={(v) => updateSocialLink(idx, 'platform', v)}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Platform" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(PLATFORM_DOMAINS).map(p => (
+                          <SelectItem key={p} value={p}>{p}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Input URL */}
+                    <Input
+                      value={item.url}
+                      onChange={(e) => updateSocialLink(idx, 'url', e.target.value)}
+                      placeholder={`Paste ${item.platform || 'social'} link...`}
+                      className={`flex-1 ${item.error ? 'border-red-500 focus-visible:ring-red-200' : ''}`}
+                    />
+
+                    {/* Delete Button */}
+                    <Button type="button" variant="ghost" onClick={() => removeSocialLink(idx)} className="text-gray-400 hover:text-red-500">
+                      <i className="ri-delete-bin-line"></i>
+                    </Button>
+                  </div>
+
+                  {/* Hiển thị lỗi nếu có */}
+                  {item.error && (
+                    <span className="text-xs text-red-500 ml-[148px] animate-in fade-in slide-in-from-top-1">
+                      <i className="ri-error-warning-fill mr-1"></i>
+                      {item.error}
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -523,62 +657,9 @@ export default function AdsCreatePage() {
             </div>
           </div>
 
-          {/* 5. SOCIAL MEDIA (Rút gọn hiển thị) */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-            <div className="mb-4 flex flex-row items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900">Social Media</h2>
-              <Button type="button" onClick={addSocialLink} variant="outline" size="sm">Add Link</Button>
-            </div>
-
-            {socialLinks.length === 0 && (
-              <p className="text-sm text-gray-400 text-center py-4">No social links added yet.</p>
-            )}
-
-            {socialLinks.map((item, idx) => (
-              <div key={idx} className="flex flex-col gap-1 mb-3">
-                <div className="flex gap-2">
-                  {/* Select Platform */}
-                  <Select
-                    value={item.platform}
-                    onValueChange={(v) => updateSocialLink(idx, 'platform', v)}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Platform" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.keys(PLATFORM_DOMAINS).map(p => (
-                        <SelectItem key={p} value={p}>{p}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  {/* Input URL */}
-                  <Input
-                    value={item.url}
-                    onChange={(e) => updateSocialLink(idx, 'url', e.target.value)}
-                    placeholder={`Paste ${item.platform || 'social'} link...`}
-                    className={`flex-1 ${item.error ? 'border-red-500 focus-visible:ring-red-200' : ''}`}
-                  />
-
-                  {/* Delete Button */}
-                  <Button type="button" variant="ghost" onClick={() => removeSocialLink(idx)} className="text-gray-400 hover:text-red-500">
-                    <i className="ri-delete-bin-line"></i>
-                  </Button>
-                </div>
-
-                {/* Hiển thị lỗi nếu có */}
-                {item.error && (
-                  <span className="text-xs text-red-500 ml-[148px] animate-in fade-in slide-in-from-top-1">
-                    <i className="ri-error-warning-fill mr-1"></i>
-                    {item.error}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-
           {/* 5. IMAGES */}
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h1 className="mb-4 text-xl font-bold text-gray-900">Images</h1>
             <h2 className="mb-4 text-xs font-bold text-gray-500 uppercase">Gallery Photos</h2>
             <div className="flex flex-wrap gap-4">
               {images.length < 5 && (
@@ -591,12 +672,50 @@ export default function AdsCreatePage() {
                 </label>
               )}
               {images.map((img, i) => (
-                <div key={i} className="relative h-32 w-32 rounded-lg border border-gray-200 overflow-hidden group">
+                <div
+                  key={i}
+                  className={`relative h-32 w-32 rounded-lg border overflow-hidden group transition-all 
+                    ${img.isMain ? 'border-blue-500 ring-2 ring-blue-500 ring-offset-1' : 'border-gray-200'}`}
+                >
                   <img src={img.preview} alt={`Preview ${i}`} className="h-full w-full object-cover" />
-                  {/* Nút Xóa Ảnh */}
-                  <button type="button" onClick={() => removeImage(i)} className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-red-600">
-                    <i className="ri-close-line text-xs"></i>
-                  </button>
+
+                  {/* Overlay Actions */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+
+                    {/* Nút Set Main */}
+                    {!img.isMain && (
+                      <button
+                        type="button"
+                        onClick={() => handleSetMainImage(i)}
+                        className="rounded-full bg-white/20 px-2 py-1 text-[10px] font-medium text-white backdrop-blur-md hover:bg-blue-600 transition-colors"
+                      >
+                        Set Cover
+                      </button>
+                    )}
+
+                    {/* Badge hiển thị "Main" nếu đã chọn */}
+                    {img.isMain && (
+                      <span className="rounded-full bg-blue-600 px-2 py-1 text-[10px] font-bold text-white shadow-sm">
+                        Main Cover
+                      </span>
+                    )}
+
+                    {/* Nút Xóa Ảnh */}
+                    <button
+                      type="button"
+                      onClick={() => removeImage(i)}
+                      className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                    >
+                      <i className="ri-delete-bin-line text-xs"></i>
+                    </button>
+                  </div>
+
+                  {/* Icon ngôi sao góc trái để dễ nhận biết khi không hover */}
+                  {img.isMain && (
+                    <div className="absolute top-1 left-1 bg-blue-600 text-white rounded-full p-1 shadow-md z-10">
+                      <i className="ri-star-fill text-xs block"></i>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -609,8 +728,26 @@ export default function AdsCreatePage() {
           {/* FOOTER */}
           <div className="flex items-center justify-end gap-4 border-t border-gray-200 pt-4">
             <Link href="/dashboard"><Button type="button" variant="ghost">Cancel</Button></Link>
-            <Button type="button" variant="outline">Save Draft</Button>
-            <Button type="submit" className="min-w-[140px] bg-blue-600 text-white hover:bg-blue-700" disabled={isLoading}>{isLoading ? 'Posting...' : 'Publish Post'}</Button>
+
+            {/* Nút Save Draft: Truyền 'deactivate' */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={(e) => handleSubmit(e, 'deactivate')}
+              disabled={isLoading}
+            >
+              Save Draft
+            </Button>
+
+            {/* Nút Publish: Truyền 'activate' */}
+            <Button
+              type="button" // Đổi thành button để tránh auto-submit form mặc định, ta tự control bằng onClick
+              className="min-w-[140px] bg-blue-600 text-white hover:bg-blue-700"
+              onClick={(e) => handleSubmit(e, 'activate')}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Posting...' : 'Publish Post'}
+            </Button>
           </div>
         </form>
       </div>
