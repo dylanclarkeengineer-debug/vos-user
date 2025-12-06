@@ -34,7 +34,8 @@ export const INITIAL_FORM_STATE = {
     bizSquareFeet: '',
     bizLeaseExpiration: '',
     // Admin Field
-    manualEntrySource: ''
+    manualEntrySource: '',
+    website: '',
 }
 
 export const MOCK_USER_BUSINESSES = [

@@ -27,7 +27,8 @@ import { API_ROUTES } from '@/constants/apiRoute'
 import { INITIAL_FORM_STATE, MOCK_USER_BUSINESSES, PLATFORM_DOMAINS } from '@/constants/ads/initialStates'
 import { validateSocialLink } from '@/utils/ads/checkMediaLink'
 import { validateImages } from '@/utils/ads/validateImage';
-import { ADS_STYLES } from '@/constants/ads/styleConstants'
+import { ADS_STYLES } from '@/constants/ads/styleConstants';
+import LocationAutoComplete from '@/components/location/LocationAutoComplete';
 
 export default function AdsCreatePage() {
   const router = useRouter()
@@ -35,6 +36,7 @@ export default function AdsCreatePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [successData, setSuccessData] = useState(null)
   const [isCopied, setIsCopied] = useState(false)
+  const [addressInfo, setAddressInfo] = useState(null);
 
   const [formData, setFormData] = useState({
     ...INITIAL_FORM_STATE,
@@ -67,6 +69,19 @@ export default function AdsCreatePage() {
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
+
+  const handleLocationSelect = (data) => {
+    // data: Object chứa full thông tin (lat, lng, city, location name...) từ Google Maps
+    setAddressInfo(data);
+
+    // Đồng bộ ngược lại các trường hiển thị trong Form (để user thấy tự động điền)
+    setFormData(prev => ({
+      ...prev,
+      city: data.fullAddress, // Hiển thị tên địa điểm cụ thể vào ô nhập (VD: Diamond Bar Center)
+      zipcode: data.zipcode || prev.zipcode, // Tự điền Zipcode nếu có
+      state: data.state || prev.state // Tự chọn State nếu trả về đúng mã
+    }));
+  };
 
   const handlePositionSelect = (pos) => {
     // Lấy tên hiển thị (ưu tiên tiếng Việt)
@@ -220,6 +235,13 @@ export default function AdsCreatePage() {
     return null
   }
 
+  const handleCloseSuccessModal = () => {
+    setSuccessData(null);
+    // Nếu muốn reset form sau khi đóng thì uncomment dòng dưới:
+    // setFormData(INITIAL_FORM_STATE); 
+    // setImages([]); 
+  }
+
   // Thêm tham số targetStatus vào hàm
   const handleSubmit = async (e, targetStatus) => {
     e.preventDefault()
@@ -227,6 +249,27 @@ export default function AdsCreatePage() {
 
     const error = validateForm()
     if (error) { alert(error); return; }
+
+    const finalAddressInfo = addressInfo ? {
+      country: "US", // Mặc định hoặc lấy từ data
+      location: addressInfo.location, // Tên địa điểm cụ thể (VD: Diamond Bar Center)
+      fullAddress: addressInfo.fullAddress, // Địa chỉ full Google trả về
+      state: addressInfo.state || formData.state,
+      city: addressInfo.city, // Tên thành phố chuẩn (VD: Diamond Bar)
+      zipcode: addressInfo.zipcode || formData.zipcode,
+      latitude: addressInfo.latitude,
+      longitude: addressInfo.longitude
+    } : {
+      // Fallback khi nhập tay hoàn toàn
+      country: "US",
+      location: formData.city,
+      fullAddress: `${formData.city}, ${formData.state} ${formData.zipcode}`,
+      state: formData.state,
+      city: formData.city,
+      zipcode: formData.zipcode,
+      latitude: 0,
+      longitude: 0
+    };
 
     setIsLoading(true)
 
@@ -245,16 +288,11 @@ export default function AdsCreatePage() {
       const payload = {
         params: {
           owner_id: user.user_id,
-          // Part 1: Basic Info
           title: formData.title,
           position: formData.position,
           category: selectedCategory,
           label: formData.label,
-
-          // --- SỬA Ở ĐÂY: Dùng targetStatus thay vì formData.status ---
           status: targetStatus,
-          // -----------------------------------------------------------
-
           requirement: formData.applicantReq,
           description: formData.description,
           contact_info: {
@@ -268,15 +306,7 @@ export default function AdsCreatePage() {
           is_show_location: formData.showLocation === 'yes',
           is_show_email: formData.showEmail === 'yes',
           is_show_phone_number: formData.showPhone === 'yes',
-          address_info: {
-            country: "US",
-            location: formData.city,
-            fullAddress: `${formData.city}, ${formData.state} ${formData.zipcode}`,
-            state: formData.state,
-            city: formData.city,
-            zipcode: formData.zipcode,
-            latitude: 0, longitude: 0
-          },
+          address_info: finalAddressInfo,
           sales_info: selectedCategory === 'Business' ? {
             asking_price: formData.bizSalePrice,
             cash_flow: formData.bizCashFlow,
@@ -318,125 +348,112 @@ export default function AdsCreatePage() {
     <div className="relative min-h-screen">
       {/* SUCCESS MODAL */}
       {successData && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="relative w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-300">
 
-            {/* 1. Header: Icon & Notification */}
-            <div className="flex flex-col items-center mb-6 shrink-0">
-              <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-50 border border-green-100 shadow-sm">
-                <i className="ri-checkbox-circle-fill text-3xl text-green-500"></i>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900">Post Published!</h2>
-              <p className="text-sm text-gray-500">Your ad is now live on the marketplace.</p>
+          <div className="relative w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+
+            {/* Close Button */}
+            <button
+              onClick={handleCloseSuccessModal}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1.5 transition-colors"
+            >
+              <i className="ri-close-line text-2xl"></i>
+            </button>
+
+            {/* Header */}
+            <div className="mb-6 flex items-center gap-2 border-b border-gray-100 pb-4">
+              <h2 className="text-xl font-bold text-gray-900">Post Published!</h2>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-1 space-y-6">
+            <div className="space-y-6">
 
-              {/* 2. Link Sharing Section */}
+              {/* Link Sharing (Giữ nguyên phần này vì nó đã ổn) */}
               <div>
-                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
-                  Share your post
-                </Label>
-                <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-1.5 shadow-sm">
-                  {/* URL Display */}
-                  <div className="flex-1 overflow-hidden px-2">
-                    <p className="truncate text-sm text-gray-600 font-medium">
-                      {getPostUrl()}
-                    </p>
+                <Label className="mb-2 block text-sm font-medium text-gray-700">Share your post</Label>
+                <div className="flex rounded-md shadow-sm">
+                  <div className="relative flex-grow focus-within:z-10">
+                    <input
+                      type="text"
+                      className="block w-full rounded-l-md border-gray-300 pl-3 pr-3 py-2 text-sm text-gray-600 focus:border-blue-500 focus:ring-blue-500"
+                      value={getPostUrl()}
+                      readOnly
+                    />
                   </div>
+                  <button onClick={handleShare} className="relative -ml-px inline-flex items-center space-x-1 border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                    <i className="ri-share-forward-line text-blue-600"></i>
+                    <span className="hidden sm:inline">Share</span>
+                  </button>
+                  <button onClick={handleCopyLink} className="relative -ml-px inline-flex items-center rounded-r-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                    {isCopied ? <i className="ri-check-line text-green-600 text-lg"></i> : <i className="ri-file-copy-line text-lg"></i>}
+                  </button>
+                </div>
+              </div>
 
-                  {/* Action Icons */}
-                  <div className="flex shrink-0 border-l border-gray-200 pl-1 gap-1">
-                    <button
-                      onClick={handleCopyLink}
-                      className="h-9 w-9 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all relative"
-                      title="Copy Link"
-                    >
-                      {isCopied ? (
-                        <i className="ri-check-line text-lg text-green-600"></i>
+              {/* --- PREVIEW SECTION (SỬA LẠI THEO YÊU CẦU) --- */}
+              <div>
+                <Label className="mb-2 block text-sm font-medium text-gray-700">Preview:</Label>
+
+                {/* Container Card */}
+                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+
+                  {/* Phần trên: Ảnh (Trái) + Nội dung (Phải) */}
+                  <div className="flex p-4 gap-4">
+
+                    {/* 1. ẢNH BÊN TRÁI (Cố định kích thước) */}
+                    <div className="h-24 w-24 shrink-0 overflow-hidden rounded-md border border-gray-100 bg-gray-50">
+                      {mainImagePreview ? (
+                        <img
+                          src={mainImagePreview}
+                          alt="Preview"
+                          className="h-full w-full object-cover"
+                        />
                       ) : (
-                        <i className="ri-file-copy-line text-lg"></i>
+                        <div className="flex h-full w-full items-center justify-center text-gray-300">
+                          <i className="ri-image-line text-3xl"></i>
+                        </div>
                       )}
-                    </button>
+                    </div>
 
-                    <button
-                      onClick={handleShare}
-                      className="h-9 w-9 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all"
-                      title="Share"
+                    {/* 2. NỘI DUNG BÊN PHẢI (Xử lý cắt chữ) */}
+                    {/* min-w-0 là class quan trọng nhất để flex-item co lại được */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-start">
+
+                      {/* Title: Giới hạn 2 dòng */}
+                      <h3 className="text-base font-bold text-gray-900 leading-tight mb-1 line-clamp-2 break-words">
+                        {formData.title || "No Title Provided"}
+                      </h3>
+
+                      {/* Description: Giới hạn 2 dòng, tự thêm ... */}
+                      <p className="text-xs text-gray-500 line-clamp-2 break-words mb-2">
+                        {formData.description || "No description provided."}
+                      </p>
+
+                      {/* Location: 1 dòng */}
+                      {(formData.city || formData.state) && (
+                        <div className="mt-auto flex items-center text-xs text-gray-400">
+                          <i className="ri-map-pin-line mr-1"></i>
+                          <span className="truncate">
+                            {formData.city}, {formData.state}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. NÚT PREVIEW Ở DƯỚI (Full Width) */}
+                  <div className="bg-gray-50 px-4 py-3 border-t border-gray-100">
+                    <Button
+                      onClick={handleGoToPost}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm"
                     >
-                      <i className="ri-share-forward-line text-lg"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. Post Preview Section (2 Columns) */}
-              <div>
-                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
-                  Preview
-                </Label>
-                <div className="group relative flex h-32 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all cursor-default">
-
-                  {/* LEFT COLUMN: Image (Fixed Width 33% or ~120px) */}
-                  <div className="w-1/3 relative bg-gray-100 shrink-0">
-                    {mainImagePreview ? (
-                      <img
-                        src={mainImagePreview}
-                        alt="Post Cover"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-gray-400 bg-gray-50">
-                        <i className="ri-image-line text-3xl opacity-50"></i>
-                      </div>
-                    )}
-                    {/* Badge AD */}
-                    <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-[2px] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-                      AD
-                    </div>
+                      View Post Now <i className="ri-arrow-right-line ml-1"></i>
+                    </Button>
                   </div>
 
-                  {/* RIGHT COLUMN: Content */}
-                  <div className="w-2/3 p-3 flex flex-col">
-                    {/* Title: Bold & Large */}
-                    <h3 className="text-base font-bold text-gray-900 leading-tight mb-1 line-clamp-2" title={formData.title}>
-                      {formData.title}
-                    </h3>
-
-                    {/* Description: Small & Truncated (...) */}
-                    <p className="text-xs text-gray-500 leading-relaxed line-clamp-3 mb-auto">
-                      {formData.description}
-                    </p>
-
-                    {/* Metadata (Optional footer inside preview) */}
-                    <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-400 font-medium pt-2 border-t border-dashed border-gray-100">
-                      <span className="truncate max-w-[100px] flex items-center gap-1">
-                        <i className="ri-map-pin-line"></i> {formData.city || 'Location'}
-                      </span>
-                    </div>
-                  </div>
                 </div>
               </div>
 
             </div>
-
-            {/* 4. Footer: Buttons */}
-            <div className="mt-6 flex flex-col gap-3 shrink-0 pt-4 border-t border-gray-100">
-              <Button
-                onClick={handleGoToPost}
-                className="w-full bg-blue-600 py-6 text-white hover:bg-blue-700 shadow-sm text-base font-semibold"
-              >
-                View Live Post <i className="ri-arrow-right-line ml-2"></i>
-              </Button>
-              <Button
-                onClick={() => router.push('/dashboard')}
-                variant="ghost"
-                className="w-full py-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 text-sm font-medium"
-              >
-                Back to Dashboard
-              </Button>
-            </div>
-
           </div>
         </div>
       )}
@@ -724,8 +741,12 @@ export default function AdsCreatePage() {
               </div>
               {/* Location fields */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">City <span className="text-red-500">*</span></Label>
-                <Input placeholder="City name" className="border-gray-300 bg-white" value={formData.city} onChange={(e) => handleInputChange('city', e.target.value)} required />
+                <LocationAutoComplete
+                  selectedState={formData.state}
+                  value={formData.city} // Input hiển thị giá trị từ formData.city
+                  onChange={(val) => handleInputChange('city', val)} // Cho phép gõ tay để tìm kiếm
+                  onLocationSelect={handleLocationSelect} // Hứng dữ liệu chi tiết khi chọn
+                />
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">State <span className="text-red-500">*</span></Label>
@@ -743,12 +764,22 @@ export default function AdsCreatePage() {
                 <Input placeholder="https://yourwebsite.com" className="border-gray-300 bg-white" value={formData.website} onChange={(e) => handleInputChange('website', e.target.value)} />
               </div>
             </div>
-            {/* 5. SOCIAL MEDIA (Rút gọn hiển thị) */}
+            {/* 5. SOCIAL MEDIA (Rút gọn & Unique Platform) */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm mt-8">
 
               <div className="mb-4 flex flex-row items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">Social Media Links</h2>
-                <Button type="button" onClick={addSocialLink} variant="outline" size="sm">Add Link</Button>
+
+                {/* Chỉ cho phép thêm nếu chưa chọn hết các Platform */}
+                <Button
+                  type="button"
+                  onClick={addSocialLink}
+                  variant="outline"
+                  size="sm"
+                  disabled={socialLinks.length >= Object.keys(PLATFORM_DOMAINS).length}
+                >
+                  {socialLinks.length >= Object.keys(PLATFORM_DOMAINS).length ? 'All platforms added' : 'Add Link'}
+                </Button>
               </div>
 
               {socialLinks.length === 0 && (
@@ -767,9 +798,19 @@ export default function AdsCreatePage() {
                         <SelectValue placeholder="Platform" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.keys(PLATFORM_DOMAINS).map(p => (
-                          <SelectItem key={p} value={p}>{p}</SelectItem>
-                        ))}
+                        {Object.keys(PLATFORM_DOMAINS)
+                          .filter(p => {
+                            // LOGIC LỌC:
+                            // Giữ lại Platform NẾU:
+                            // 1. Platform này chưa được chọn bởi bất kỳ dòng nào khác (linkIdx !== idx)
+                            // 2. HOẶC Platform này chính là cái đang được chọn ở dòng hiện tại (để hiển thị value)
+                            const isSelectedByOthers = socialLinks.some((link, linkIdx) => linkIdx !== idx && link.platform === p);
+                            return !isSelectedByOthers;
+                          })
+                          .map(p => (
+                            <SelectItem key={p} value={p}>{p}</SelectItem>
+                          ))
+                        }
                       </SelectContent>
                     </Select>
 
