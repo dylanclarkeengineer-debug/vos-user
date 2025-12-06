@@ -27,6 +27,7 @@ import { API_ROUTES } from '@/constants/apiRoute'
 import { INITIAL_FORM_STATE, MOCK_USER_BUSINESSES, PLATFORM_DOMAINS } from '@/constants/ads/initialStates'
 import { validateSocialLink } from '@/utils/ads/checkMediaLink'
 import { validateImages } from '@/utils/ads/validateImage';
+import { ADS_STYLES } from '@/constants/ads/styleConstants'
 
 export default function AdsCreatePage() {
   const router = useRouter()
@@ -147,6 +148,7 @@ export default function AdsCreatePage() {
   };
 
   const addSocialLink = () => setSocialLinks([...socialLinks, { platform: '', url: '', error: null }]);
+  const mainImagePreview = images.find(img => img.isMain)?.preview || images[0]?.preview || null;
 
   const updateSocialLink = (index, field, value) => {
     const updated = [...socialLinks]
@@ -168,17 +170,46 @@ export default function AdsCreatePage() {
 
   const removeSocialLink = (i) => setSocialLinks(socialLinks.filter((_, idx) => idx !== i));
 
+  // --- MODAL ACTIONS ---
+  const getPostUrl = () => {
+    if (!successData?.job_id) return '';
+    return API_ROUTES.listingPage(successData.job_id);
+  }
+
+  const handleCopyLink = () => {
+    const url = getPostUrl();
+    if (url) {
+      navigator.clipboard.writeText(url);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }
+  }
+
+  const handleShare = () => {
+    const url = getPostUrl();
+    if (navigator.share) {
+      navigator.share({
+        title: formData.title,
+        text: formData.description,
+        url: url,
+      }).catch(console.error);
+    } else {
+      // Fallback nếu trình duyệt không hỗ trợ share native
+      alert("Sharing is not supported on this browser. Link copied instead.");
+      handleCopyLink();
+    }
+  }
+
+  const handleGoToPost = () => {
+    const url = getPostUrl();
+    if (url) window.location.href = url;
+  }
+
   const handleCopyId = () => {
     if (successData?.job_id) {
       navigator.clipboard.writeText(successData.job_id)
       setIsCopied(true)
       setTimeout(() => setIsCopied(false), 2000)
-    }
-  }
-
-  const handleGoToPost = () => {
-    if (successData?.job_id) {
-      window.location.href = API_ROUTES.listingPage(successData.job_id)
     }
   }
 
@@ -212,8 +243,6 @@ export default function AdsCreatePage() {
       }, {})
 
       const payload = {
-        user_id: user.user_id,
-        country: "US",
         params: {
           owner_id: user.user_id,
           // Part 1: Basic Info
@@ -228,19 +257,17 @@ export default function AdsCreatePage() {
 
           requirement: formData.applicantReq,
           description: formData.description,
-          // ... (giữ nguyên các trường còn lại)
-          is_show_location: formData.showLocation === 'yes',
-          is_show_email: formData.showEmail === 'yes',
-          is_show_phone_number: formData.showPhone === 'yes',
-          manual_entry_source: (user.role === 'admin' || user.role === 'moderator') ? formData.manualEntrySource : "",
           contact_info: {
             author: formData.authorName,
             phone: formData.contactPhone,
             secondary_phone_number: formData.secondaryPhone,
             email: formData.contactEmail,
-            website: "",
-            social_links: socialLinksObj
+            social_links: socialLinksObj,
+            website: ""
           },
+          is_show_location: formData.showLocation === 'yes',
+          is_show_email: formData.showEmail === 'yes',
+          is_show_phone_number: formData.showPhone === 'yes',
           address_info: {
             country: "US",
             location: formData.city,
@@ -260,8 +287,12 @@ export default function AdsCreatePage() {
             employees: Number(formData.bizEmployees) || 0,
             square_feet: Number(formData.bizSquareFeet) || 0,
           } : undefined,
-          associated_business_id: formData.relatedBusiness !== 'none' ? formData.relatedBusiness : ""
+          associated_business_id: formData.relatedBusiness !== 'none' ? formData.relatedBusiness : "",
+          manual_entry_source: (user.role === 'admin' || user.role === 'moderator') ? formData.manualEntrySource : "",
+          createdAt: new Date().toISOString(),
         },
+        user_id: user.user_id,
+        country: "US",
         imageInfo: { folderName: user.user_id, images: processedImages, removedImages: [] }
       }
 
@@ -285,30 +316,127 @@ export default function AdsCreatePage() {
   // --- RENDER ---
   return (
     <div className="relative min-h-screen">
-      {/* SUCCESS MODAL (Giữ nguyên như cũ) */}
+      {/* SUCCESS MODAL */}
       {successData && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-2xl md:p-8 animate-in zoom-in-95 duration-200">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-              <i className="ri-checkbox-circle-fill text-5xl text-green-600"></i>
-            </div>
-            <div className="text-center">
-              <h2 className="mb-2 text-2xl font-bold text-gray-900">Post Published!</h2>
-              <p className="mb-6 text-sm text-gray-500">Your classified post is now live.</p>
-            </div>
-            <div className="mb-8 rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-gray-500 text-center">Job ID Reference</p>
-              <div className="flex items-center justify-center gap-3">
-                <span className="font-mono text-xl font-bold text-gray-800 tracking-wide">{successData.job_id}</span>
-                <button onClick={handleCopyId} className="group relative flex h-8 w-8 items-center justify-center rounded-md hover:bg-gray-200 transition-colors">
-                  {isCopied ? <i className="ri-check-line text-lg text-green-600 font-bold"></i> : <i className="ri-file-copy-line text-lg text-gray-400 group-hover:text-blue-600"></i>}
-                </button>
+          <div className="relative w-full max-w-lg rounded-xl bg-white p-6 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+
+            {/* 1. Header: Icon & Notification */}
+            <div className="flex flex-col items-center mb-6 shrink-0">
+              <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-green-50 border border-green-100 shadow-sm">
+                <i className="ri-checkbox-circle-fill text-3xl text-green-500"></i>
               </div>
+              <h2 className="text-2xl font-bold text-gray-900">Post Published!</h2>
+              <p className="text-sm text-gray-500">Your ad is now live on the marketplace.</p>
             </div>
-            <div className="flex flex-col gap-3">
-              <Button onClick={handleGoToPost} className="w-full bg-blue-600 py-6 text-white hover:bg-blue-700 font-semibold">Go to Post <i className="ri-external-link-line ml-2"></i></Button>
-              <Button onClick={() => router.push('/dashboard')} variant="outline" className="w-full border-gray-300 py-6 text-gray-700 hover:bg-gray-50">Back to Dashboard</Button>
+
+            <div className="flex-1 overflow-y-auto px-1 space-y-6">
+
+              {/* 2. Link Sharing Section */}
+              <div>
+                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+                  Share your post
+                </Label>
+                <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 p-1.5 shadow-sm">
+                  {/* URL Display */}
+                  <div className="flex-1 overflow-hidden px-2">
+                    <p className="truncate text-sm text-gray-600 font-medium">
+                      {getPostUrl()}
+                    </p>
+                  </div>
+
+                  {/* Action Icons */}
+                  <div className="flex shrink-0 border-l border-gray-200 pl-1 gap-1">
+                    <button
+                      onClick={handleCopyLink}
+                      className="h-9 w-9 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all relative"
+                      title="Copy Link"
+                    >
+                      {isCopied ? (
+                        <i className="ri-check-line text-lg text-green-600"></i>
+                      ) : (
+                        <i className="ri-file-copy-line text-lg"></i>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={handleShare}
+                      className="h-9 w-9 flex items-center justify-center rounded-md hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all"
+                      title="Share"
+                    >
+                      <i className="ri-share-forward-line text-lg"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Post Preview Section (2 Columns) */}
+              <div>
+                <Label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">
+                  Preview
+                </Label>
+                <div className="group relative flex h-32 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition-all cursor-default">
+
+                  {/* LEFT COLUMN: Image (Fixed Width 33% or ~120px) */}
+                  <div className="w-1/3 relative bg-gray-100 shrink-0">
+                    {mainImagePreview ? (
+                      <img
+                        src={mainImagePreview}
+                        alt="Post Cover"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center text-gray-400 bg-gray-50">
+                        <i className="ri-image-line text-3xl opacity-50"></i>
+                      </div>
+                    )}
+                    {/* Badge AD */}
+                    <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-[2px] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                      AD
+                    </div>
+                  </div>
+
+                  {/* RIGHT COLUMN: Content */}
+                  <div className="w-2/3 p-3 flex flex-col">
+                    {/* Title: Bold & Large */}
+                    <h3 className="text-base font-bold text-gray-900 leading-tight mb-1 line-clamp-2" title={formData.title}>
+                      {formData.title}
+                    </h3>
+
+                    {/* Description: Small & Truncated (...) */}
+                    <p className="text-xs text-gray-500 leading-relaxed line-clamp-3 mb-auto">
+                      {formData.description}
+                    </p>
+
+                    {/* Metadata (Optional footer inside preview) */}
+                    <div className="mt-2 flex items-center gap-2 text-[10px] text-gray-400 font-medium pt-2 border-t border-dashed border-gray-100">
+                      <span className="truncate max-w-[100px] flex items-center gap-1">
+                        <i className="ri-map-pin-line"></i> {formData.city || 'Location'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
+
+            {/* 4. Footer: Buttons */}
+            <div className="mt-6 flex flex-col gap-3 shrink-0 pt-4 border-t border-gray-100">
+              <Button
+                onClick={handleGoToPost}
+                className="w-full bg-blue-600 py-6 text-white hover:bg-blue-700 shadow-sm text-base font-semibold"
+              >
+                View Live Post <i className="ri-arrow-right-line ml-2"></i>
+              </Button>
+              <Button
+                onClick={() => router.push('/dashboard')}
+                variant="ghost"
+                className="w-full py-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 text-sm font-medium"
+              >
+                Back to Dashboard
+              </Button>
+            </div>
+
           </div>
         </div>
       )}
@@ -317,12 +445,12 @@ export default function AdsCreatePage() {
         <form className="space-y-6">
 
           {/* GLOBAL SETTINGS */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className={ADS_STYLES.SECTION_CONTAINER}>
             <h2 className="mb-6 text-xl font-bold text-gray-900">General Settings</h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className={ADS_STYLES.GRID_LAYOUT}>
               {/* Status */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Label <span className="text-red-500">*</span></Label>
+                <Label className={ADS_STYLES.LABEL}>Label <span className="text-red-500">*</span></Label>
                 <Select value={formData.label} onValueChange={(val) => handleInputChange('label', val)}>
                   <SelectTrigger className="w-full border-gray-300 bg-white"><SelectValue placeholder="Select label" /></SelectTrigger>
                   <SelectContent>
@@ -333,7 +461,7 @@ export default function AdsCreatePage() {
               </div>
               {/* Show Email */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Show Email on Post?</Label>
+                <Label className={ADS_STYLES.LABEL}>Show Email on Post?</Label>
                 <Select value={formData.showEmail} onValueChange={(val) => handleInputChange('showEmail', val)}>
                   <SelectTrigger className="w-full border-gray-300 bg-white"><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
@@ -341,7 +469,7 @@ export default function AdsCreatePage() {
               </div>
               {/* Show Phone */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Show Phone Number on Post?</Label>
+                <Label className={ADS_STYLES.LABEL}>Show Phone Number on Post?</Label>
                 <Select value={formData.showPhone} onValueChange={(val) => handleInputChange('showPhone', val)}>
                   <SelectTrigger className="w-full border-gray-300 bg-white"><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
@@ -358,32 +486,32 @@ export default function AdsCreatePage() {
             </div>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {/* Author Name */}
+
+              {/* --- ROW 1: TITLE & CATEGORY --- */}
+
+              {/* Title: Quan trọng nhất nên đưa lên đầu */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Author Name</Label>
-                <Input placeholder="Your name" className="border-gray-300 bg-white" value={formData.authorName} onChange={(e) => handleInputChange('authorName', e.target.value)} />
-              </div>
-              {/* Salary Range */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Salary Range</Label>
-                <Input placeholder="e.g. $3000 - $5000" className="border-gray-300 bg-white" value={formData.priceSalary} onChange={(e) => handleInputChange('priceSalary', e.target.value)} />
-              </div>
-              {/* Title */}
-              <div className="col-span-1 space-y-2 md:col-span-2">
-                <Label className="text-sm font-medium text-gray-700">Title (Min 10 chars) <span className="text-red-500">*</span></Label>
-                <Input placeholder="Enter a descriptive title" className="border-gray-300 bg-white" value={formData.title} onChange={(e) => handleInputChange('title', e.target.value)} required />
+                <Label className={ADS_STYLES.LABEL}>Title <span className="text-red-500">*</span></Label>
+                <Input
+                  placeholder="Enter a descriptive title"
+                  className={ADS_STYLES.INPUT_BASE}
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  required
+                />
+                <p className="text-[10px] text-gray-400">Min 10 characters</p>
               </div>
 
-              {/* Category */}
+              {/* Category: Nằm cạnh Title */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Category <span className="text-red-500">*</span></Label>
+                <Label className={ADS_STYLES.LABEL}>Category <span className="text-red-500">*</span></Label>
                 <Select
                   onValueChange={(val) => {
-                    setSelectedCategory(val);       // 1. Cập nhật Category mới
-                    handleInputChange('position', ''); // 2. Reset Position về rỗng
+                    setSelectedCategory(val);
+                    handleInputChange('position', '');
                   }}
                 >
-                  <SelectTrigger className="h-auto w-full border-gray-300 bg-white py-2.5">
+                  <SelectTrigger className={`h-auto w-full py-2.5 ${ADS_STYLES.INPUT_BASE}`}>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
@@ -399,38 +527,31 @@ export default function AdsCreatePage() {
                 </Select>
               </div>
 
-              {/* Position + Suggestions */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Position / Sub-Title</Label>
+              {/* --- ROW 2: POSITION & SALARY --- */}
 
-                {/* Input hiển thị các vị trí đã chọn, user vẫn có thể gõ thêm thủ công */}
+              {/* Position */}
+              <div className="space-y-2">
+                <Label className={ADS_STYLES.LABEL}>Position / Sub-Title</Label>
                 <Input
-                  placeholder="e.g. Nail Technician, Receptionist"
-                  className="border-gray-300 bg-white mb-2"
+                  placeholder="Enter or select position"
+                  className={ADS_STYLES.INPUT_BASE + " mb-2"}
                   value={formData.position}
                   onChange={(e) => handleInputChange('position', e.target.value)}
                 />
-
-                {/* Position Chips Suggestion */}
+                {/* Position Suggestions Chips */}
                 {currentCategoryObj && currentCategoryObj.positions_suggestion && (
                   <div className="flex flex-wrap gap-2">
                     {currentCategoryObj.positions_suggestion.map((pos, idx) => {
                       const label = typeof pos === 'object' ? pos.vi : pos;
-
-                      // Kiểm tra xem label này đã nằm trong chuỗi input chưa
-                      const isSelected = formData.position
-                        .split(',')
-                        .map(s => s.trim())
-                        .includes(label);
-
+                      const isSelected = formData.position.split(',').map(s => s.trim()).includes(label);
                       return (
                         <span
                           key={idx}
                           onClick={() => handlePositionSelect(pos)}
                           className={`cursor-pointer rounded-full px-3 py-1 text-xs font-medium transition-colors border
-                            ${isSelected
-                              ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' // Style khi ĐƯỢC chọn
-                              : 'bg-gray-100 text-gray-600 border-transparent hover:bg-blue-100 hover:text-blue-700' // Style khi CHƯA chọn
+                  ${isSelected
+                              ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                              : 'bg-gray-100 text-gray-600 border-transparent hover:bg-blue-100 hover:text-blue-700'
                             }`}
                         >
                           {label} {isSelected && <i className="ri-check-line ml-1"></i>}
@@ -439,21 +560,59 @@ export default function AdsCreatePage() {
                     })}
                   </div>
                 )}
-                <p className="text-[10px] text-gray-500">Click multiple tags to combine them.</p>
               </div>
+
+              {/* Salary Range */}
+              <div className="space-y-2">
+                <Label className={ADS_STYLES.LABEL}>Salary Range</Label>
+                <Input
+                  placeholder="e.g. $3000 - $5000"
+                  className={ADS_STYLES.INPUT_BASE}
+                  value={formData.priceSalary}
+                  onChange={(e) => handleInputChange('priceSalary', e.target.value)}
+                />
+              </div>
+
+              {/* --- ROW 3: AUTHOR (Có thể xóa nếu muốn giống hệt ảnh, nhưng giữ lại cho đủ data) --- */}
+              <div className="space-y-2">
+                <Label className={ADS_STYLES.LABEL}>Author Name</Label>
+                <Input
+                  placeholder="Your name"
+                  className={ADS_STYLES.INPUT_BASE}
+                  value={formData.authorName}
+                  onChange={(e) => handleInputChange('authorName', e.target.value)}
+                />
+              </div>
+              {/* Một div rỗng để giữ Author Name không bị tràn dòng nếu muốn, hoặc để trống */}
+              <div className="hidden md:block"></div>
+
+              {/* --- ROW 4: TEXT AREAS (FULL WIDTH) --- */}
 
               {/* Description */}
               <div className="col-span-1 space-y-2 md:col-span-2">
-                <Label className="text-sm font-medium text-gray-700">Description (Min 30 chars, no bad words) <span className="text-red-500">*</span></Label>
-                <Textarea placeholder="Provide detailed information..." className="min-h-[150px] resize-y border-gray-300 bg-white" value={formData.description} onChange={(e) => handleInputChange('description', e.target.value)} required />
+                <Label className={ADS_STYLES.LABEL}>Description <span className="text-red-500">*</span></Label>
+                <Textarea
+                  placeholder="Provide detailed information about your post..."
+                  className={ADS_STYLES.TEXTAREA_BASE}
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  required
+                />
+                <div className="flex justify-end">
+                  <span className="text-[10px] text-gray-400">Min 30 characters</span>
+                </div>
               </div>
 
               {/* Requirement */}
               <div className="col-span-1 space-y-2 md:col-span-2">
-                <Label className="text-sm font-medium text-gray-700">Applicant Requirements</Label>
-                <Textarea placeholder="List requirements..." className="min-h-[100px] resize-y border-gray-300 bg-white" value={formData.applicantReq} onChange={(e) => handleInputChange('applicantReq', e.target.value)} />
+                <Label className={ADS_STYLES.LABEL}>Applicant Requirements</Label>
+                <Textarea
+                  placeholder="List requirements for applicants..."
+                  className={`${ADS_STYLES.TEXTAREA_BASE} min-h-[100px]`}
+                  value={formData.applicantReq}
+                  onChange={(e) => handleInputChange('applicantReq', e.target.value)}
+                />
               </div>
-
 
             </div>
           </div>
@@ -467,36 +626,36 @@ export default function AdsCreatePage() {
               </div>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Asking Price ($)</Label>
-                  <Input type="number" placeholder="50000" className="border-gray-300 bg-white" value={formData.bizSalePrice} onChange={(e) => handleInputChange('bizSalePrice', e.target.value)} />
+                  <Label className={ADS_STYLES.LABEL}>Asking Price ($)</Label>
+                  <Input type="number" placeholder="50000" className={ADS_STYLES.INPUT_BASE} value={formData.bizSalePrice} onChange={(e) => handleInputChange('bizSalePrice', e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Gross Revenue ($)</Label>
-                  <Input type="number" placeholder="Annual Revenue" className="border-gray-300 bg-white" value={formData.bizGrossRevenue} onChange={(e) => handleInputChange('bizGrossRevenue', e.target.value)} />
+                  <Label className={ADS_STYLES.LABEL}>Gross Revenue ($)</Label>
+                  <Input type="number" placeholder="Annual Revenue" className={ADS_STYLES.INPUT_BASE} value={formData.bizGrossRevenue} onChange={(e) => handleInputChange('bizGrossRevenue', e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Cash Flow ($)</Label>
-                  <Input type="text" placeholder="Annual Cash Flow" className="border-gray-300 bg-white" value={formData.bizCashFlow} onChange={(e) => handleInputChange('bizCashFlow', e.target.value)} />
+                  <Label className={ADS_STYLES.LABEL}>Cash Flow ($)</Label>
+                  <Input type="text" placeholder="Annual Cash Flow" className={ADS_STYLES.INPUT_BASE} value={formData.bizCashFlow} onChange={(e) => handleInputChange('bizCashFlow', e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Rent ($/month)</Label>
-                  <Input type="number" placeholder="2000" className="border-gray-300 bg-white" value={formData.bizLeasePrice} onChange={(e) => handleInputChange('bizLeasePrice', e.target.value)} />
+                  <Label className={ADS_STYLES.LABEL}>Monthly Rent</Label>
+                  <Input type="number" placeholder="2000" className={ADS_STYLES.INPUT_BASE} value={formData.bizLeasePrice} onChange={(e) => handleInputChange('bizLeasePrice', e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Employees</Label>
-                  <Input type="number" placeholder="Number of employees" className="border-gray-300 bg-white" value={formData.bizEmployees} onChange={(e) => handleInputChange('bizEmployees', e.target.value)} />
+                  <Label className={ADS_STYLES.LABEL}>Employees</Label>
+                  <Input type="number" placeholder="Number of employees" className={ADS_STYLES.INPUT_BASE} value={formData.bizEmployees} onChange={(e) => handleInputChange('bizEmployees', e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Square Feet</Label>
-                  <Input type="number" placeholder="e.g. 2000" className="border-gray-300 bg-white" value={formData.bizSquareFeet} onChange={(e) => handleInputChange('bizSquareFeet', e.target.value)} />
+                  <Label className={ADS_STYLES.LABEL}>Square Feet</Label>
+                  <Input type="number" placeholder="e.g. 2000" className={ADS_STYLES.INPUT_BASE} value={formData.bizSquareFeet} onChange={(e) => handleInputChange('bizSquareFeet', e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">Lease Expiration</Label>
-                  <Input type="date" className="border-gray-300 bg-white" value={formData.bizLeaseExpiration} onChange={(e) => handleInputChange('bizLeaseExpiration', e.target.value)} />
+                  <Label className={ADS_STYLES.LABEL}>Lease Expiration</Label>
+                  <Input type="date" className={ADS_STYLES.INPUT_BASE} value={formData.bizLeaseExpiration} onChange={(e) => handleInputChange('bizLeaseExpiration', e.target.value)} />
                 </div>
                 <div className="col-span-1 space-y-2 md:col-span-2">
-                  <Label className="text-sm font-medium text-gray-700">Reason for Selling</Label>
-                  <Textarea placeholder="Explain why you're selling..." className="min-h-[80px] resize-y border-gray-300 bg-white" value={formData.bizReason} onChange={(e) => handleInputChange('bizReason', e.target.value)} />
+                  <Label className={ADS_STYLES.LABEL}>Reason for Selling</Label>
+                  <Textarea placeholder="Explain why you're selling..." className={ADS_STYLES.TEXTAREA_BASE} value={formData.bizReason} onChange={(e) => handleInputChange('bizReason', e.target.value)} />
                 </div>
               </div>
             </div>
@@ -586,8 +745,9 @@ export default function AdsCreatePage() {
             </div>
             {/* 5. SOCIAL MEDIA (Rút gọn hiển thị) */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm mt-8">
+
               <div className="mb-4 flex flex-row items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">Social Media</h2>
+                <h2 className="text-xl font-bold text-gray-900">Social Media Links</h2>
                 <Button type="button" onClick={addSocialLink} variant="outline" size="sm">Add Link</Button>
               </div>
 
