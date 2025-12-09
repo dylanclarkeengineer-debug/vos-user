@@ -5,41 +5,34 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { API_ROUTES } from '@/constants/apiRoute';
 
-// 1. PERFORMANCE FIX: Khai báo mảng libraries bên ngoài Component
+// keep libraries outside component for perf
 const LIBRARIES = ['places'];
 
 export default function LocationAutoComplete({ selectedState, value, onChange, disabled, onLocationSelect }) {
-
     const [suggestions, setSuggestions] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const wrapperRef = useRef(null);
 
-    // Services Refs
     const autocompleteService = useRef(null);
     const placesService = useRef(null);
 
-    // 2. Load Google Maps Script
     const { isLoaded } = useLoadScript({
         googleMapsApiKey: API_ROUTES.GOOGLE_MAPS_API_KEY,
         libraries: LIBRARIES,
     });
 
-    // 3. Khởi tạo Services (ĐÃ SỬA LỖI TÊN CLASS TẠI ĐÂY)
     useEffect(() => {
         if (isLoaded && !autocompleteService.current && window.google) {
-            // SỬA: Dùng AutocompleteService thay vì AutocompleteSuggestion (không tồn tại)
             autocompleteService.current = new window.google.maps.places.AutocompleteService();
-
             const mapDiv = document.createElement('div');
-            // SỬA: Dùng PlacesService thay vì Place (Place không có hàm getDetails như cách bạn dùng)
             placesService.current = new window.google.maps.places.PlacesService(mapDiv);
         }
     }, [isLoaded]);
 
-    // Debounce search
+    // Debounced search: NO LONGER requires selectedState — search directly from user input
     useEffect(() => {
-        if (!isLoaded || !selectedState || !value || value.length < 2) {
+        if (!isLoaded || !value || value.length < 2) {
             setSuggestions([]);
             return;
         }
@@ -51,38 +44,26 @@ export default function LocationAutoComplete({ selectedState, value, onChange, d
 
             setIsLoading(true);
 
-            // 1. INPUT: Chỉ gửi từ khóa user nhập + Tên bang để Google định hướng (Bias)
-            // Bỏ dấu phẩy cứng nhắc, dùng khoảng trắng để Google tự hiểu context
+            // send only the user input (no forced state append). Keep country bias if desired.
             const request = {
-                input: `${value} ${selectedState}`,
-                componentRestrictions: { country: 'us' },
+                input: value,
+                componentRestrictions: { country: 'us' }, // keep country restriction if your app is US-only
             };
 
             autocompleteService.current.getPlacePredictions(request, (results, status) => {
                 setIsLoading(false);
                 if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
-
-                    // 2. FILTER: Dùng Regex để tìm mã bang (VD: "CA") xuất hiện như một từ riêng biệt
-                    // \b là ranh giới từ -> đảm bảo tìm thấy "CA" nhưng không bắt nhầm "CAT" hay "CAR"
-                    const stateRegex = new RegExp(`\\b${selectedState}\\b`, 'i');
-
-                    const filtered = results.filter(place => {
-                        // Kiểm tra xem mã bang có xuất hiện trong description không
-                        return stateRegex.test(place.description);
-                    });
-
-                    setSuggestions(filtered);
+                    setSuggestions(results);
                     setShowDropdown(true);
                 } else {
                     setSuggestions([]);
                 }
             });
-        }, 400);
+        }, 350);
 
         return () => clearTimeout(delayDebounce);
-    }, [value, selectedState, isLoaded]);
+    }, [value, isLoaded]);
 
-    // Helper functions
     const extractComponent = (components, type) => {
         const component = components.find(c => c.types.includes(type));
         return component ? component.short_name : '';
@@ -91,21 +72,21 @@ export default function LocationAutoComplete({ selectedState, value, onChange, d
     const extractCity = (components) => {
         const locality = components.find(c => c.types.includes('locality'));
         if (locality) return locality.long_name;
-
+        const postalTown = components.find(c => c.types.includes('postal_town'));
+        if (postalTown) return postalTown.long_name;
         const sublocality = components.find(c => c.types.includes('sublocality'));
         if (sublocality) return sublocality.long_name;
-
         const neighborhood = components.find(c => c.types.includes('neighborhood'));
         if (neighborhood) return neighborhood.long_name;
-
+        const admin2 = components.find(c => c.types.includes('administrative_area_level_2'));
+        if (admin2) return admin2.long_name;
         return '';
     };
 
-    // Xử lý khi user chọn 1 địa điểm
     const handleSelect = (place) => {
+        // show selected description in input immediately
         onChange(place.description);
 
-        // --- ERROR FIX: Kiểm tra kỹ place_id ---
         if (!place || !place.place_id) {
             console.error("Missing Place ID. Cannot fetch details.", place);
             setShowDropdown(false);
@@ -122,29 +103,31 @@ export default function LocationAutoComplete({ selectedState, value, onChange, d
                 if (status === window.google.maps.places.PlacesServiceStatus.OK && placeDetails) {
                     const comps = placeDetails.address_components || [];
 
-                    let finalAddress = placeDetails.formatted_address;
-                    if (placeDetails.name && !finalAddress.includes(placeDetails.name)) {
+                    let finalAddress = placeDetails.formatted_address || '';
+                    if (placeDetails.name && finalAddress && !finalAddress.includes(placeDetails.name)) {
                         finalAddress = `${placeDetails.name}, ${finalAddress}`;
+                    } else if (!finalAddress) {
+                        // fallback: use structured_formatting main_text when formatted_address missing
+                        finalAddress = place.structured_formatting?.main_text || place.description || placeDetails.name || '';
                     }
-                    // --------------------
 
                     const locationData = {
                         country: extractComponent(comps, 'country') || 'US',
-                        location: placeDetails.name, // Đây chính là cái tên "Dia..." bạn cần
-                        fullAddress: finalAddress,   // Đã sửa: Chứa cả tên + địa chỉ
+                        location: placeDetails.name || (place.structured_formatting && place.structured_formatting.main_text) || '', // short place name
+                        fullAddress: finalAddress,   // full formatted address
                         state: extractComponent(comps, 'administrative_area_level_1'),
                         city: extractCity(comps),
                         zipcode: extractComponent(comps, 'postal_code'),
-                        latitude: placeDetails.geometry?.location?.lat() || 0,
-                        longitude: placeDetails.geometry?.location?.lng() || 0
+                        latitude: placeDetails.geometry?.location?.lat ? placeDetails.geometry.location.lat() : 0,
+                        longitude: placeDetails.geometry?.location?.lng ? placeDetails.geometry.location.lng() : 0
                     };
 
-                    console.log("Location Data:", locationData);
-                    onChange(finalAddress);
+                    // update input with full address for clarity
+                    onChange(locationData.fullAddress || locationData.location);
 
                     onLocationSelect(locationData);
                 } else {
-                    console.error("Google Maps GetDetails Failed:", status);
+                    console.error("Google Maps getDetails failed:", status);
                 }
             });
         }
@@ -152,7 +135,6 @@ export default function LocationAutoComplete({ selectedState, value, onChange, d
         setShowDropdown(false);
     };
 
-    // Click outside
     useEffect(() => {
         function handleClickOutside(event) {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
@@ -174,16 +156,11 @@ export default function LocationAutoComplete({ selectedState, value, onChange, d
             <div className="relative">
                 <Input
                     type="text"
-                    placeholder={selectedState ? "Enter specific location (e.g. Diamond Bar Center)..." : "Select State first"}
+                    placeholder="Enter street/place (e.g. Diamond Bar Center)..."
                     value={value}
-                    onChange={(e) => {
-                        onChange(e.target.value);
-                        setShowDropdown(true);
-                    }}
-                    onFocus={() => {
-                        if (value && value.length >= 2) setShowDropdown(true);
-                    }}
-                    disabled={disabled || !selectedState}
+                    onChange={(e) => { onChange(e.target.value); setShowDropdown(true); }}
+                    onFocus={() => { if (value && value.length >= 2) setShowDropdown(true); }}
+                    disabled={disabled}
                     className="border-gray-300 bg-white pr-8"
                     autoComplete="off"
                 />
@@ -195,14 +172,12 @@ export default function LocationAutoComplete({ selectedState, value, onChange, d
                 )}
             </div>
 
-            {/* Dropdown */}
             {showDropdown && suggestions.length > 0 && (
                 <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-md border border-gray-200 bg-white shadow-xl animate-in fade-in zoom-in-95 duration-100">
                     <ul className="max-h-60 overflow-auto py-1">
                         {suggestions.map((item) => {
                             const mainText = item.structured_formatting.main_text;
                             const secondaryText = item.structured_formatting.secondary_text;
-
                             return (
                                 <li
                                     key={item.place_id}
@@ -210,12 +185,8 @@ export default function LocationAutoComplete({ selectedState, value, onChange, d
                                     className="cursor-pointer px-4 py-2 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-0"
                                 >
                                     <div className="flex flex-col text-left">
-                                        <span className="text-sm font-semibold text-gray-800">
-                                            {mainText}
-                                        </span>
-                                        <span className="text-[10px] text-gray-500 truncate">
-                                            {secondaryText}
-                                        </span>
+                                        <span className="text-sm font-semibold text-gray-800">{mainText}</span>
+                                        <span className="text-[10px] text-gray-500 truncate">{secondaryText}</span>
                                     </div>
                                 </li>
                             );
@@ -224,19 +195,12 @@ export default function LocationAutoComplete({ selectedState, value, onChange, d
                 </div>
             )}
 
-            {/* Not found */}
             {showDropdown && !isLoading && suggestions.length === 0 && value.length > 2 && (
                 <div className="absolute z-50 mt-1 w-full rounded-md border border-gray-200 bg-white p-3 shadow-xl">
                     <p className="text-sm text-gray-500 italic text-center">
-                        No location found in {selectedState}
+                        No locations found
                     </p>
                 </div>
-            )}
-
-            {!selectedState && (
-                <p className="text-[10px] text-orange-500 flex items-center gap-1 mt-1">
-                    <i className="ri-alert-line"></i> Select State first to search location
-                </p>
             )}
         </div>
     );

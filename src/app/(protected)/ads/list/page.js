@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie'
 
 import ConfirmDeletePost from '@/components/ads/ConfirmDeactivePost'
 import PromoteAdModal from '@/components/ads/PromoteAdModal'
@@ -32,113 +33,22 @@ import {
 
 import 'remixicon/fonts/remixicon.css'
 
-// --- MOCK DATA (Tăng lên 12 item để test pagination) ---
-const GENERATE_MOCK_DATA = () => {
-  const baseData = [
-    {
-      id: 'a7k9m2p5',
-      title: 'Software Engineer Position - Remote',
-      description:
-        'We are looking for an experienced software engineer to join our remote team. Must have 5+ years of experience in React & Node.js.',
-      price: '$120,000 - $150,000',
-      status: 'Active',
-      views: 156,
-      engagement: { applications: 23, shares: 8 },
-      details: {
-        category: 'Jobs - Full Time',
-        location: 'San Francisco, CA',
-        posted: '15/01/2024',
-        expires: '15/02/2024',
-      },
-    },
-    {
-      id: 'b3n8q1r4',
-      title: '2BR Apartment for Rent in San Jose',
-      description:
-        'Beautiful 2-bedroom apartment in downtown San Jose. Close to public transportation and shopping centers. Fully furnished.',
-      price: '$3,200/month',
-      status: 'Active',
-      views: 89,
-      engagement: { applications: 12, shares: 5 },
-      details: {
-        category: 'Housing - For Rent',
-        location: 'San Jose, CA',
-        posted: '12/01/2024',
-        expires: '12/02/2024',
-      },
-    },
-    {
-      id: 'c9x2z5y7',
-      title: '2023 MacBook Pro M2 Max - Silver',
-      description:
-        'Brand new condition, box included. AppleCare+ valid until 2026. 32GB RAM, 1TB SSD. Battery cycle count: 15.',
-      price: '$2,800',
-      status: 'Pending',
-      views: 45,
-      engagement: { applications: 4, shares: 2 },
-      details: {
-        category: 'Electronics - Laptops',
-        location: 'Austin, TX',
-        posted: '18/01/2024',
-        expires: '18/02/2024',
-      },
-    },
-    {
-      id: 'd4w1v8t6',
-      title: 'Marketing Manager - Tech Startup',
-      description:
-        'Leading marketing strategy for a Series A fintech startup. Experience in B2B growth marketing required.',
-      price: '$90,000 - $110,000',
-      status: 'Expired',
-      views: 312,
-      engagement: { applications: 45, shares: 18 },
-      details: {
-        category: 'Jobs - Marketing',
-        location: 'New York, NY',
-        posted: '01/12/2023',
-        expires: '01/01/2024',
-      },
-    },
-    {
-      id: 'e5u3s9j2',
-      title: 'Used Toyota Camry 2020 SE',
-      description:
-        'Clean title, single owner, 25k miles. Regular maintenance at dealership. New tires installed last month.',
-      price: '$22,500',
-      status: 'Active',
-      views: 204,
-      engagement: { applications: 8, shares: 15 },
-      details: {
-        category: 'Vehicles - Cars',
-        location: 'Seattle, WA',
-        posted: '20/01/2024',
-        expires: '20/02/2024',
-      },
-    },
-  ]
-
-  // Nhân bản data để có đủ trang test
-  let fullData = [...baseData]
-  // Thêm data giả
-  for (let i = 0; i < 7; i++) {
-    fullData.push({
-      ...baseData[i % 5],
-      id: `mock_id_${i}`,
-      title: `${baseData[i % 5].title} (Copy ${i + 1})`,
-      views: Math.floor(Math.random() * 500),
-      status: i % 2 === 0 ? 'Active' : 'Expired',
-    })
-  }
-  return fullData
-}
-
-const ALL_DATA = GENERATE_MOCK_DATA()
+import { getListJobsByUser } from '@/utils/ads/adsHandlers'
+import { useAuth } from '@/context/authContext'
+import { API_ROUTES } from '@/constants/apiRoute'
 
 export default function AdsListPage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState('')
+  const { user } = useAuth()
+  const userId = user?.user_id || null
 
-  // --- PAGINATION STATE ---
+  // --- DATA fetched from API ---
+  const [jobs, setJobs] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(null)
+
+  // --- PAGINATION STATE (client-side pagination for loaded array) ---
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 
@@ -147,14 +57,115 @@ export default function AdsListPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedAd, setSelectedAd] = useState(null)
 
+  // Optionally keep server-side metadata if backend returns it
+  const [serverMeta, setServerMeta] = useState({
+    currentPage: null,
+    totalPages: null,
+    totalJobs: null,
+    pageSize: null,
+  })
+
+  // Helper:   format unix seconds -> localized date string (fallback to ISO)
+  const formatUnixSecondsToLocal = (secs) => {
+    if (!secs && secs !== 0) return null
+    try {
+      const d = new Date(Number(secs) * 1000)
+      if (Number.isNaN(d.getTime())) return String(secs)
+      return d.toLocaleDateString()
+    } catch {
+      return String(secs)
+    }
+  }
+
+  // Helper: format ISO date string (YYYY-MM-DD or other) to localized date
+  const formatIsoToLocal = (isoStr) => {
+    if (!isoStr) return null
+    try {
+      // Some strings like "2025-12-19" are safe for Date()
+      const d = new Date(isoStr)
+      if (Number.isNaN(d.getTime())) return isoStr
+      return d.toLocaleDateString()
+    } catch {
+      return isoStr
+    }
+  }
+
+  // Build post URL from a job id
+  const handleGoToPost = (id) => {
+    if (!id) return
+    const url = API_ROUTES.listingPage(id)
+    if (url) {
+      // use native navigation to open the listing
+      window.location.href = url
+    }
+  }
+
+  // --- Fetch jobs on mount ---
+  useEffect(() => {
+    let mounted = true
+
+    const loadJobs = async () => {
+      setIsLoading(true)
+      setFetchError(null)
+
+      try {
+        const token = Cookies.get('vos_token')
+
+        const data = await getListJobsByUser({
+          token,
+          userId,
+          // page and pageSize can be passed here if you prefer server-side paging
+        })
+
+        if (!mounted) return
+
+        // Backend can return either:
+        // - an array (list of jobs), or
+        // - an object with metadata and jobPosts array.  
+        if (Array.isArray(data)) {
+          setJobs(data)
+          setServerMeta({ currentPage: null, totalPages: null, totalJobs: null, pageSize: null })
+        } else if (data && typeof data === 'object' && Array.isArray(data.jobPosts)) {
+          setJobs(data.jobPosts)
+          setServerMeta({
+            currentPage: data.currentPage ?? null,
+            totalPages: data.totalPages ?? null,
+            totalJobs: data.totalJobs ?? null,
+            pageSize: data.pageSize ?? null,
+          })
+        } else {
+          // unexpected shape:   set empty list and show a notice
+          setJobs([])
+          setServerMeta({ currentPage: null, totalPages: null, totalJobs: null, pageSize: null })
+        }
+      } catch (err) {
+        console.error('Failed to load jobs list:', err)
+        if (!mounted) return
+        const serverMsg = err?.response?.data || err?.message || 'Unknown error'
+        setFetchError(typeof serverMsg === 'string' ? serverMsg : 'Unable to load your ads.')
+        setJobs([])
+        setServerMeta({ currentPage: null, totalPages: null, totalJobs: null, pageSize: null })
+      } finally {
+        if (mounted) setIsLoading(false)
+      }
+    }
+
+    loadJobs()
+
+    return () => {
+      mounted = false
+    }
+  }, [userId])
+
   // --- LOGIC CẮT DATA ---
-  const totalPages = Math.ceil(ALL_DATA.length / itemsPerPage)
+  const totalItems = jobs.length
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage))
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
-  const currentData = ALL_DATA.slice(startIndex, endIndex)
+  const currentData = jobs.slice(startIndex, endIndex)
 
   // --- HANDLERS ---
-  const handleEdit = (id) => router.push(`/ads/create?edit=${id}`)
+  const handleEdit = (id) => router.push(`/ads/create? edit=${id}`)
   const handleDuplicate = (id) => router.push(`/ads/create?copy=${id}`)
   const handlePauseClick = (ad) => {
     setSelectedAd(ad)
@@ -175,6 +186,9 @@ export default function AdsListPage() {
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page)
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
     }
   }
 
@@ -182,14 +196,19 @@ export default function AdsListPage() {
   const renderStatus = (status) => {
     const styles = {
       Active: 'bg-green-100 text-green-700',
+      active: 'bg-green-100 text-green-700',
       Pending: 'bg-yellow-100 text-yellow-700',
+      pending: 'bg-yellow-100 text-yellow-700',
       Expired: 'bg-neutral-100 text-neutral-500',
+      expired: 'bg-neutral-100 text-neutral-500',
+      deactive: 'bg-neutral-100 text-neutral-500',
     }
+    const normalizedStatus = status || 'Expired'
     return (
       <span
-        className={`${styles[status] || styles.Expired} mb-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase`}
+        className={`${styles[normalizedStatus] || styles.Expired} mb-2 inline-block rounded-full px-2. 5 py-0.5 text-[10px] font-bold tracking-wide uppercase`}
       >
-        {status}
+        {normalizedStatus}
       </span>
     )
   }
@@ -201,6 +220,8 @@ export default function AdsListPage() {
         <Input
           placeholder="Search by title or ad code..."
           className="h-10 w-full border-neutral-200 bg-white focus-visible:ring-1 focus-visible:ring-neutral-900 lg:max-w-md"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
         <div className="ml-auto flex w-full gap-2 lg:w-auto">
           <Select defaultValue="all">
@@ -232,12 +253,19 @@ export default function AdsListPage() {
         {/* Header */}
         <div className="flex flex-none items-center justify-between border-b border-neutral-100 bg-white px-6 py-5">
           <h2 className="text-xl font-bold text-neutral-900">
-            Posted Ads ({ALL_DATA.length})
+            Posted Ads ({serverMeta.totalJobs ?? totalItems})
           </h2>
           <div className="flex items-center gap-1.5 rounded-full bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-500">
             <i className="ri-eye-line text-neutral-400"></i> Total Views: 12,515
           </div>
         </div>
+
+        {/* optional error banner when fetch failed */}
+        {fetchError && (
+          <div className="border-b border-red-100 bg-red-50 px-6 py-3 text-sm text-red-800">
+            {fetchError}
+          </div>
+        )}
 
         {/* Body Table (Flex-1 để đẩy footer xuống đáy nếu ít item) */}
         <div className="flex-1 overflow-auto">
@@ -264,127 +292,174 @@ export default function AdsListPage() {
               </TableHeader>
 
               <TableBody>
-                {currentData.map((item) => (
-                  <TableRow
-                    key={item.id}
-                    className="border-b border-neutral-100 transition-colors hover:bg-neutral-50/30"
-                  >
-                    {/* Col 1 */}
-                    <TableCell className="py-6 pl-6 align-top">
-                      <div className="flex flex-col items-start gap-1">
-                        <span className="font-mono text-[10px] text-neutral-400">
-                          Ad Code: {item.id}
-                        </span>
-                        <h3 className="mb-1 cursor-pointer text-base leading-tight font-bold text-neutral-900 transition-colors group-hover:text-blue-600">
-                          {item.title}
-                        </h3>
-                        {renderStatus(item.status)}
-
-                        <p className="mb-2 line-clamp-2 max-w-xl text-sm leading-relaxed text-neutral-500">
-                          {item.description}
-                        </p>
-
-                        <div className="mb-3 text-sm font-bold text-blue-600">
-                          {item.price}
-                        </div>
-
-                        <Button
-                          variant="secondary"
-                          className="h-7 rounded-sm border-none bg-blue-50 px-3 text-[10px] font-bold tracking-wider text-blue-600 uppercase hover:bg-blue-100 hover:text-blue-700"
-                        >
-                          <i className="ri-eye-line mr-1.5"></i> View Post
-                        </Button>
-                      </div>
-                    </TableCell>
-
-                    {/* Col 2: Actions */}
-                    <TableCell className="py-6 text-center align-top">
-                      <div className="flex flex-col items-center gap-1">
-                        <ActionIcon
-                          icon="ri-pencil-line"
-                          tooltip="Edit"
-                          onClick={() => handleEdit(item.id)}
-                        />
-                        <ActionIcon
-                          icon="ri-rocket-line"
-                          tooltip="Promote"
-                          color="text-orange-500 hover:bg-orange-50"
-                          onClick={() => handlePromoteClick(item)}
-                        />
-                        <ActionIcon
-                          icon="ri-file-copy-line"
-                          tooltip="Copy"
-                          onClick={() => handleDuplicate(item.id)}
-                        />
-                        <ActionIcon
-                          icon="ri-delete-bin-line"
-                          tooltip="Delete"
-                          color="text-red-500 hover:bg-red-50"
-                          onClick={() => handlePauseClick(item)}
-                        />
-                      </div>
-                    </TableCell>
-
-                    {/* Col 3: Views */}
-                    <TableCell className="py-6 text-center align-top">
-                      <span className="mt-2 block text-xl font-bold text-neutral-900">
-                        {item.views}
-                      </span>
-                    </TableCell>
-
-                    {/* Col 4: Engagement */}
-                    <TableCell className="py-6 align-top">
-                      <div className="mt-1 flex flex-col gap-3">
-                        <div className="flex items-start gap-2">
-                          <i className="ri-file-list-3-line mt-0.5 text-neutral-400"></i>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
-                              Applications
-                            </span>
-                            <span className="text-sm font-bold text-neutral-900">
-                              {item.engagement.applications}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2">
-                          <i className="ri-share-forward-line mt-0.5 text-neutral-400"></i>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
-                              Shares
-                            </span>
-                            <span className="text-sm font-bold text-neutral-900">
-                              {item.engagement.shares}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </TableCell>
-
-                    {/* Col 5: Details */}
-                    <TableCell className="py-6 align-top">
-                      <div className="mt-1 space-y-2.5">
-                        <DetailRow
-                          icon="ri-folder-line"
-                          text={item.details.category}
-                        />
-                        <DetailRow
-                          icon="ri-map-pin-line"
-                          text={item.details.location}
-                        />
-                        <DetailRow
-                          icon="ri-calendar-line"
-                          text={`Posted: ${item.details.posted}`}
-                        />
-                        <div className="flex items-center gap-3 text-xs">
-                          <i className="ri-time-line w-4 text-center text-red-500"></i>
-                          <span className="font-bold text-red-500">
-                            Expires: {item.details.expires}
-                          </span>
-                        </div>
-                      </div>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell className="py-12 text-center" colSpan={5}>
+                      Loading ads...
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : currentData.length === 0 ? (
+                  <TableRow>
+                    <TableCell className="py-12 text-center" colSpan={5}>
+                      No ads found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  currentData.map((item) => {
+                    // Prefer createdAt (unix seconds) for posted date when available
+                    const postedDate = item.createdAt
+                      ? formatUnixSecondsToLocal(item.createdAt)
+                      : item.details?.posted ?? '—'
+
+                    // Lease expiration may live in sales_info.   Format it if present. 
+                    const leaseExpirationRaw = item.sales_info?.lease_expiration || item.lease_expiration || null
+                    const leaseExpiration = leaseExpirationRaw ? formatIsoToLocal(leaseExpirationRaw) : null
+
+                    // Default views to 0 if not present
+                    const viewCount = item.views ?? 0
+
+                    return (
+                      <TableRow
+                        key={item.id}
+                        className="border-b border-neutral-100 transition-colors hover:bg-neutral-50/30"
+                      >
+                        {/* Col 1 */}
+                        <TableCell className="py-6 pl-6 align-top">
+                          <div className="flex flex-col items-start gap-1 max-w-md">
+                            {/* Ad Code - 1 line with truncate */}
+                            <span className="font-mono text-[10px] text-neutral-400 truncate max-w-full">
+                              Ad Code:  {item.id}
+                            </span>
+
+                            {/* Title - 1 line max */}
+                            <h3 className="mb-1 cursor-pointer text-base leading-tight font-bold text-neutral-900 transition-colors hover:text-blue-600 truncate max-w-full">
+                              {item.title}
+                            </h3>
+
+                            {renderStatus(item.status)}
+
+                            {/* Description - 1 line max */}
+                            <p className="mb-2 text-sm leading-relaxed text-neutral-500 truncate max-w-full">
+                              {item.description}
+                            </p>
+
+                            {/* Price - 1 line max */}
+                            <div className="mb-3 text-sm font-bold text-blue-600 truncate max-w-full">
+                              {item.price}
+                            </div>
+
+                            <Button
+                              variant="secondary"
+                              className="h-7 rounded-sm border-none bg-blue-50 px-3 text-[10px] font-bold tracking-wider text-blue-600 uppercase hover:bg-blue-100 hover:text-blue-700"
+                              onClick={() => handleGoToPost(item.id)}
+                            >
+                              <i className="ri-eye-line mr-1.5"></i> View Post
+                            </Button>
+                          </div>
+                        </TableCell>
+
+                        {/* Col 2: Actions */}
+                        <TableCell className="py-6 text-center align-top">
+                          <div className="flex flex-col items-center gap-1">
+                            <ActionIcon
+                              icon="ri-pencil-line"
+                              tooltip="Edit"
+                              onClick={() => handleEdit(item.id)}
+                            />
+                            <ActionIcon
+                              icon="ri-rocket-line"
+                              tooltip="Promote"
+                              color="text-orange-500 hover:bg-orange-50"
+                              onClick={() => handlePromoteClick(item)}
+                            />
+                            <ActionIcon
+                              icon="ri-file-copy-line"
+                              tooltip="Copy"
+                              onClick={() => handleDuplicate(item.id)}
+                            />
+                            <ActionIcon
+                              icon="ri-delete-bin-line"
+                              tooltip="Delete"
+                              color="text-red-500 hover:bg-red-50"
+                              onClick={() => handlePauseClick(item)}
+                            />
+                          </div>
+                        </TableCell>
+
+                        {/* Col 3: Views (default to 0) */}
+                        <TableCell className="py-6 text-center align-top">
+                          <span className="mt-2 block text-xl font-bold text-neutral-900">
+                            {viewCount}
+                          </span>
+                        </TableCell>
+
+                        {/* Col 4: Engagement */}
+                        <TableCell className="py-6 align-top">
+                          <div className="mt-1 flex flex-col gap-3">
+                            <div className="flex items-start gap-2">
+                              <i className="ri-file-list-3-line mt-0.5 text-neutral-400 shrink-0"></i>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
+                                  Applications
+                                </span>
+                                <span className="text-sm font-bold text-neutral-900">
+                                  {item.engagement?.applications ?? 0}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <i className="ri-share-forward-line mt-0.5 text-neutral-400 shrink-0"></i>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase">
+                                  Shares
+                                </span>
+                                <span className="text-sm font-bold text-neutral-900">
+                                  {item.engagement?.shares ?? 0}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+
+                        {/* Col 5: Details */}
+                        <TableCell className="py-6 align-top">
+                          <div className="mt-1 space-y-2.5">
+                            <DetailRow
+                              icon="ri-folder-line"
+                              text={item.details?.category ?? item.category ?? '—'}
+                            />
+                            <DetailRow
+                              icon="ri-map-pin-line"
+                              text={item.details?.location ?? item.address_info?.city ?? '—'}
+                            />
+                            <DetailRow
+                              icon="ri-calendar-line"
+                              text={`Posted: ${postedDate}`}
+                            />
+
+                            {/* Expires - 2 lines max */}
+                            <div className="flex items-start gap-3 text-xs">
+                              <i className="ri-time-line w-4 text-center text-red-500 shrink-0 mt-0.5"></i>
+                              <span className="font-bold text-red-500 line-clamp-2 break-words">
+                                Expires: {item.details?.expires ?? '—'}
+                              </span>
+                            </div>
+
+                            {/* Lease expiration - 2 lines max, only show if present */}
+                            {leaseExpiration && (
+                              <div className="flex items-start gap-3 text-xs">
+                                <i className="ri-building-line w-4 text-center text-neutral-400 shrink-0 mt-0.5"></i>
+                                <span className="text-xs text-neutral-700 line-clamp-2 break-words">
+                                  Lease Expiration: {leaseExpiration}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
+                )}
               </TableBody>
             </Table>
           </TooltipProvider>
@@ -395,11 +470,11 @@ export default function AdsListPage() {
           <div className="text-xs font-medium text-neutral-500">
             Showing{' '}
             <span className="font-bold text-neutral-900">
-              {startIndex + 1}-{Math.min(endIndex, ALL_DATA.length)}
+              {startIndex + 1}-{Math.min(endIndex, totalItems)}
             </span>{' '}
             of{' '}
             <span className="font-bold text-neutral-900">
-              {ALL_DATA.length}
+              {serverMeta.totalJobs ?? totalItems}
             </span>{' '}
             ads
           </div>
@@ -421,11 +496,10 @@ export default function AdsListPage() {
                   <Button
                     key={page}
                     variant={currentPage === page ? 'default' : 'outline'}
-                    className={`h-8 w-8 rounded-sm text-xs font-bold ${
-                      currentPage === page
-                        ? 'border-neutral-900 bg-neutral-900 text-white hover:bg-black'
-                        : 'border-transparent bg-white text-neutral-600 hover:bg-neutral-100 hover:text-black'
-                    }`}
+                    className={`h-8 w-8 rounded-sm text-xs font-bold ${currentPage === page
+                      ? 'border-neutral-900 bg-neutral-900 text-white hover:bg-black'
+                      : 'border-transparent bg-white text-neutral-600 hover:bg-neutral-100 hover:text-black'
+                      }`}
                     onClick={() => goToPage(page)}
                   >
                     {page}
@@ -495,8 +569,8 @@ const ActionIcon = ({
 )
 
 const DetailRow = ({ icon, text }) => (
-  <div className="flex items-center gap-3 text-xs text-neutral-600">
-    <i className={`${icon} w-4 text-center text-neutral-400`}></i>
-    <span>{text}</span>
+  <div className="flex items-start gap-3 text-xs text-neutral-600">
+    <i className={`${icon} w-4 text-center text-neutral-400 shrink-0 mt-0.5`}></i>
+    <span className="line-clamp-2 break-words">{text}</span>
   </div>
 )

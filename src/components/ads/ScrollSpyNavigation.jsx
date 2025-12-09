@@ -127,50 +127,54 @@ export default function ScrollSpyNavigation({
     if (!sections || sections.length === 0) return null;
 
     return (
-        <aside className="hidden lg:block lg:col-span-3 xl:col-span-2">
-            <div className="sticky top-24 space-y-4">
-                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <h3 className="mb-4 text-xs font-bold text-gray-400 uppercase tracking-widest">
-                        On this page
-                    </h3>
+        <div className="flex flex-col h-full bg-white">
+            {/* Header */}
+            <div className="px-6 py-6 border-b border-gray-100">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    On This Page
+                </h3>
+            </div>
 
-                    <nav className="flex flex-col space-y-1" aria-label="On this page">
-                        {sections.map((section) => {
-                            const isActive = activeId === section.id;
-                            const isValid = !!validations[section.id];
-                            const showGreen = isActive && isValid;
+            {/* Navigation Links */}
+            <nav className="flex-1 overflow-y-auto px-4 py-6" aria-label="On this page">
+                <ul className="space-y-1">
+                    {sections.map((section) => {
+                        const isActive = activeId === section.id;
+                        const isValid = !!validations[section.id];
 
-                            let iconClass = "ri-checkbox-blank-line text-gray-300";
-                            if (showGreen) iconClass = "ri-checkbox-circle-fill text-green-600";
-                            else if (isValid) iconClass = "ri-checkbox-circle-fill text-gray-400";
-
-                            return (
+                        return (
+                            <li key={section.id}>
                                 <button
-                                    key={section.id}
                                     onClick={(e) => {
                                         e.preventDefault();
                                         scrollToSection(section.id);
                                     }}
-                                    className={`group flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 w-full text-left
-                    ${isActive
-                                            ? "bg-blue-50 text-blue-700 shadow-sm border-l-4 border-blue-600 pl-2"
-                                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-4 border-transparent pl-2"
-                                        }`}
+                                    className={`
+                                        w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-between
+                                        ${isActive
+                                            ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-600 pl-2. 5'
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-2 border-transparent pl-2.5'
+                                        }
+                                    `}
                                     aria-current={isActive ? "true" : "false"}
                                 >
-                                    <span className="flex items-center gap-3">
-                                        <span>{section.label}</span>
+                                    <span className={isActive ? 'font-semibold' : ''}>
+                                        {section.label}
                                     </span>
 
-                                    <span className="ml-2 flex items-center">
-                                        <i className={`${iconClass} text-lg`} aria-hidden="true" />
-                                    </span>
+                                    {/* Validation Icon */}
+                                    {isValid && (
+                                        <i
+                                            className={`text-base ${isActive ? 'ri-checkbox-circle-fill text-blue-600' : 'ri-checkbox-circle-line text-gray-400'}`}
+                                            aria-hidden="true"
+                                        />
+                                    )}
                                 </button>
-                            );
-                        })}
-                    </nav>
-                </div>
-            </div>
-        </aside>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </nav>
+        </div>
     );
 }
