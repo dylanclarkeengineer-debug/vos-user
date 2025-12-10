@@ -30,7 +30,9 @@ import { validateImages } from '@/utils/ads/validateImage';
 import { ADS_STYLES } from '@/constants/ads/styleConstants';
 import LocationAutoComplete from '@/components/location/LocationAutoComplete';
 
-import ScrollSpyNavigation from '@/components/ads/ScrollSpyNavigation' // ScrollSpy component
+import ScrollSpyNavigation from '@/components/ads/ScrollSpyNavigation'
+import { SALARY_TYPES, SALARY_UNITS } from '@/constants/ads/salaryConstants'
+import { normalizeToHourly, generateSalaryText, buildSalaryPayload } from '@/utils/ads/salaryUtils'
 
 export default function AdsCreatePage() {
   const router = useRouter()
@@ -45,6 +47,16 @@ export default function AdsCreatePage() {
 
   // New:  error message state for UI banner
   const [errorMessage, setErrorMessage] = useState(null);
+
+  // Để lưu trữ trường salary
+  const [salaryData, setSalaryData] = useState({
+    type: 'range',
+    min: '',
+    max: '',
+    amount: '',
+    unit: 'hourly',
+    currency: 'USD',
+  })
 
   const [formData, setFormData] = useState({
     ...INITIAL_FORM_STATE,
@@ -102,6 +114,11 @@ export default function AdsCreatePage() {
     // clear previous error when user types
     if (errorMessage) setErrorMessage(null);
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  // Để set state cho salary
+  const handleSalaryChange = (field, value) => {
+    setSalaryData(prev => ({ ...prev, [field]: value }))
   }
 
   const handleLocationSelect = (data) => {
@@ -317,6 +334,8 @@ export default function AdsCreatePage() {
         return acc
       }, {})
 
+      const salaryPayload = buildSalaryPayload(salaryData)
+
       const payload = {
         params: {
           owner_id: user.user_id,
@@ -327,7 +346,11 @@ export default function AdsCreatePage() {
           status: targetStatus,
           requirement: formData.applicantReq,
           description: formData.description,
-          price_salary: formData.priceSalary, // Thử nghiệm
+
+          salary: salaryPayload.salary,
+          salary_min_norm: salaryPayload.salary_min_norm,
+          salary_max_norm: salaryPayload.salary_max_norm,
+
           contact_info: {
             author: formData.authorName,
             phone: formData.contactPhone,
@@ -594,6 +617,7 @@ export default function AdsCreatePage() {
               </div>
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* Title */}
                 <div className="space-y-2">
                   <Label className={ADS_STYLES.LABEL}>Title <span className="text-red-500">*</span></Label>
                   <Input
@@ -606,6 +630,7 @@ export default function AdsCreatePage() {
                   <p className="text-[10px] text-gray-400">Min 10 characters</p>
                 </div>
 
+                {/* Category */}
                 <div className="space-y-2">
                   <Label className={ADS_STYLES.LABEL}>Category <span className="text-red-500">*</span></Label>
                   <Select
@@ -618,7 +643,6 @@ export default function AdsCreatePage() {
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
 
-                    {/* Dùng !  để ép override các giá trị mặc định */}
                     <SelectContent className="max-h-[300px] ! px-4 !py-3">
                       {categories.map((cat) => (
                         <SelectItem
@@ -640,6 +664,7 @@ export default function AdsCreatePage() {
                   </Select>
                 </div>
 
+                {/* Position / Sub-Title */}
                 <div className="space-y-2">
                   <Label className={ADS_STYLES.LABEL}>Position / Sub-Title</Label>
                   <Input
@@ -659,7 +684,7 @@ export default function AdsCreatePage() {
                             key={idx}
                             onClick={() => handlePositionSelect(pos)}
                             className={`cursor-pointer rounded-full px-3 py-1 text-xs font-medium transition-colors border
-                      ${isSelected
+                  ${isSelected
                                 ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
                                 : 'bg-gray-100 text-gray-600 border-transparent hover:bg-blue-100 hover:text-blue-700'
                               }`}
@@ -672,16 +697,7 @@ export default function AdsCreatePage() {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label className={ADS_STYLES.LABEL}>Salary Range</Label>
-                  <Input
-                    placeholder="e.g.  $3000 - $5000"
-                    className={ADS_STYLES.INPUT_BASE}
-                    value={formData.priceSalary}
-                    onChange={(e) => handleInputChange('priceSalary', e.target.value)}
-                  />
-                </div>
-
+                {/* Author Name */}
                 <div className="space-y-2">
                   <Label className={ADS_STYLES.LABEL}>Author Name</Label>
                   <Input
@@ -691,8 +707,8 @@ export default function AdsCreatePage() {
                     onChange={(e) => handleInputChange('authorName', e.target.value)}
                   />
                 </div>
-                <div className="hidden md:block"></div>
 
+                {/* Description - Full width */}
                 <div className="col-span-1 space-y-2 md:col-span-2">
                   <Label className={ADS_STYLES.LABEL}>Description <span className="text-red-500">*</span></Label>
                   <Textarea
@@ -707,6 +723,179 @@ export default function AdsCreatePage() {
                   </div>
                 </div>
 
+                {/* Salary Information - Full width */}
+                <div className="col-span-1 md:col-span-2 mt-2">
+
+                  {/* Container:  Nền xám nhẹ, bo góc, tạo cảm giác một phân khu riêng biệt */}
+                  <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-5 space-y-5">
+
+                    {/* Header: Đậm hơn, có Icon */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200 pb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600">
+                          <i className="ri-money-dollar-circle-fill text-xl"></i>
+                        </div>
+                        <div>
+                          <Label className="text-base font-bold text-gray-900 block">Salary Information</Label>
+                          <p className="text-[11px] text-gray-500 font-medium">Optional - Define the pay structure for this position. </p>
+                        </div>
+                      </div>
+
+                      {/* Live Preview Badge */}
+                      <div className="shrink-0">
+                        {generateSalaryText(salaryData) ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-white border border-green-200 px-3 py-1 text-xs font-bold text-green-700 shadow-sm">
+                            <i className="ri-check-line"></i> {generateSalaryText(salaryData)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">Not specified</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* ROW 1: Type & Unit */}
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                      <div className="space-y-1. 5">
+                        <Label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                          Payment Type
+                        </Label>
+                        <Select
+                          value={salaryData.type}
+                          onValueChange={(val) => handleSalaryChange('type', val)}
+                        >
+                          <SelectTrigger className="bg-white border-gray-300 h-10 font-medium text-gray-700 focus:ring-2 focus: ring-green-500/20">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SALARY_TYPES.map((t) => (
+                              <SelectItem key={t.value} value={t.value} className="font-medium">
+                                {t.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Unit - Ẩn nếu là Thỏa thuận (Negotiable) */}
+                      <div className={`space-y-1.5 transition-opacity duration-200 ${salaryData.type === 'negotiable' ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                        <Label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                          Pay Period
+                        </Label>
+                        <Select
+                          value={salaryData.unit}
+                          onValueChange={(val) => handleSalaryChange('unit', val)}
+                          disabled={salaryData.type === 'negotiable'}
+                        >
+                          <SelectTrigger className="bg-white border-gray-300 h-10 font-medium text-gray-700">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SALARY_UNITS.map((u) => (
+                              <SelectItem key={u.value} value={u.value}>
+                                {u.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    {/* ROW 2: Amount Inputs (Chỉ hiện khi không phải Negotiable) */}
+                    {salaryData.type !== 'negotiable' && (
+                      <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="grid grid-cols-1 gap-5 md:grid-cols-12">
+
+                          {/* Currency Select (Chiếm 3 cột) */}
+                          <div className="md:col-span-3 space-y-1.5">
+                            <Label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Currency</Label>
+                            <Select
+                              value={salaryData.currency}
+                              onValueChange={(val) => handleSalaryChange('currency', val)}
+                            >
+                              <SelectTrigger className="bg-white border-gray-300 h-10 font-bold text-gray-800">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="USD">USD ($)</SelectItem>
+                                <SelectItem value="EUR">EUR (€)</SelectItem>
+                                <SelectItem value="GBP">GBP (£)</SelectItem>
+                                <SelectItem value="VND">VND (₫)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Dynamic Inputs (Chiếm 9 cột còn lại) */}
+                          <div className="md:col-span-9">
+                            <div className="flex flex-col md:flex-row gap-4">
+
+                              {/* CASE:  RANGE (Min & Max) */}
+                              {salaryData.type === 'range' && (
+                                <>
+                                  <div className="flex-1 space-y-1.5">
+                                    <Label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Minimum</Label>
+                                    <div className="relative">
+                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">$</span>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g.  50,000"
+                                        className="pl-7 bg-white border-gray-300 h-10 font-semibold text-gray-900"
+                                        value={salaryData.min}
+                                        onChange={(e) => handleSalaryChange('min', e.target.value)}
+                                        min="0"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center pt-6 text-gray-400 font-bold">-</div>
+                                  <div className="flex-1 space-y-1.5">
+                                    <Label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Maximum</Label>
+                                    <div className="relative">
+                                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">$</span>
+                                      <Input
+                                        type="number"
+                                        placeholder="e.g.  80,000"
+                                        className="pl-7 bg-white border-gray-300 h-10 font-semibold text-gray-900"
+                                        value={salaryData.max}
+                                        onChange={(e) => handleSalaryChange('max', e.target.value)}
+                                        min={salaryData.min || 0}
+                                      />
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+
+                              {/* CASE: FIXED / STARTING / UPTO (Single Input) */}
+                              {(salaryData.type === 'fixed' || salaryData.type === 'starting' || salaryData.type === 'upto') && (
+                                <div className="w-full space-y-1.5">
+                                  <Label className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                                    {salaryData.type === 'starting' ? 'Starting Amount' :
+                                      salaryData.type === 'upto' ? 'Maximum Amount' : 'Amount'}
+                                  </Label>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">$</span>
+                                    <Input
+                                      type="number"
+                                      placeholder="e.g. 60,000"
+                                      className="pl-7 bg-white border-gray-300 h-10 font-semibold text-gray-900"
+                                      value={salaryData.type === 'upto' ? salaryData.max : (salaryData.type === 'starting' ? salaryData.min : salaryData.amount)}
+                                      onChange={(e) => {
+                                        const key = salaryData.type === 'upto' ? 'max' : (salaryData.type === 'starting' ? 'min' : 'amount');
+                                        handleSalaryChange(key, e.target.value);
+                                      }}
+                                      min="0"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Applicant Requirements - Full width */}
                 <div className="col-span-1 space-y-2 md:col-span-2">
                   <Label className={ADS_STYLES.LABEL}>Applicant Requirements</Label>
                   <Textarea

@@ -242,25 +242,37 @@ export default function AdsListPage() {
                         {/* Col 1: Title & Description */}
                         <TableCell className="py-6 pl-6 align-top">
                           <div className="flex flex-col items-start gap-1 max-w-[350px] lg:max-w-md">
-                            <span className="font-mono text-[10px] text-neutral-400 break-all">Ad Code: {item.id}</span>
+                            {/* Ad Code - 1 line với ellipsis */}
+                            <span className="font-mono text-[10px] text-neutral-400 truncate w-full">
+                              Ad Code: {item.id}
+                            </span>
 
-                            <h3 className="mb-1 cursor-pointer text-base leading-tight font-bold text-neutral-900 transition-colors hover:text-blue-600 line-clamp-2 break-words w-full"
-                              title={item.title} onClick={() => handleGoToPost(item.id)}>
+                            {/* Title - Max 2 lines với ellipsis */}
+                            <h3
+                              className="mb-1 cursor-pointer text-base leading-tight font-bold text-neutral-900 transition-colors hover:text-blue-600 line-clamp-2 break-words w-full"
+                              title={item.title}
+                              onClick={() => handleGoToPost(item.id)}
+                            >
                               {item.title || "Untitled Post"}
                             </h3>
 
                             {renderStatus(item.status)}
 
-                            <p className="mb-2 text-sm leading-relaxed text-neutral-500 line-clamp-3 break-words w-full">
+                            {/* Description - Max 2 lines với ellipsis (thay vì 3) */}
+                            <p className="mb-2 text-sm leading-relaxed text-neutral-500 line-clamp-2 break-words w-full">
                               {item.description || "No description available."}
                             </p>
 
-                            {/* UPDATED: Hiển thị price_salary thay vì price */}
-                            <div className="mb-3 text-sm font-bold text-blue-600 truncate w-full">
-                              {item.price_salary || "Contact for price"}
+                            {/* Salary - 1 line với ellipsis */}
+                            <div className="mb-3 text-sm font-bold text-blue-600 truncate w-full" title={item.salary?.display_text || item.price_salary}>
+                              {item.salary?.display_text || item.price_salary || "Contact for price"}
                             </div>
 
-                            <Button variant="secondary" className="h-7 rounded-sm border-none bg-blue-50 px-3 text-[10px] font-bold tracking-wider text-blue-600 uppercase hover:bg-blue-100 hover:text-blue-700" onClick={() => handleGoToPost(item.id)}>
+                            <Button
+                              variant="secondary"
+                              className="h-7 rounded-sm border-none bg-blue-50 px-3 text-[10px] font-bold tracking-wider text-blue-600 uppercase hover:bg-blue-100 hover:text-blue-700"
+                              onClick={() => handleGoToPost(item.id)}
+                            >
                               <i className="ri-eye-line mr-1.5"></i> View Post
                             </Button>
                           </div>
@@ -366,6 +378,8 @@ const EngagementItem = ({ icon, label, value }) => (
 const DetailRow = ({ icon, text, color = 'text-neutral-600' }) => (
   <div className={`flex items-start gap-3 text-xs ${color}`}>
     <i className={`${icon} w-4 text-center text-neutral-400 shrink-0 mt-0.5`}></i>
-    <span className="line-clamp-2 break-words">{text}</span>
+    <span className="line-clamp-2 break-words leading-relaxed" title={text}>
+      {text}
+    </span>
   </div>
 )
