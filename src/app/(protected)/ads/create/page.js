@@ -327,6 +327,7 @@ export default function AdsCreatePage() {
           status: targetStatus,
           requirement: formData.applicantReq,
           description: formData.description,
+          price_salary: formData.priceSalary, // Thử nghiệm
           contact_info: {
             author: formData.authorName,
             phone: formData.contactPhone,
