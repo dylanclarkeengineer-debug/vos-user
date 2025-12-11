@@ -1,25 +1,21 @@
-// page.js
 'use client'
 
 import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import CreateForm from '@/components/ads/CreateForm'
-import { useAdsStore } from '@/stores/adsStore'
+import { useAdsContext } from '@/context/adsContext'
 
 export default function CreateAdsPage() {
   const searchParams = useSearchParams()
-  // const [initialJob, setInitialJob] = useState(null) // <--- XÓA state này
   const [mode, setMode] = useState('new')
 
-  // Lấy thẳng từ Store
-  const editJob = useAdsStore(state => state.editJob)
-  const copyJob = useAdsStore(state => state.copyJob)
+  // 1. Lấy Data từ Context
+  const { editJob, copyJob } = useAdsContext()
 
-  // Xác định data truyền xuống
-  // Nếu có ID trên URL VÀ có data trong store thì lấy, không thì null
   const editId = searchParams?.get?.('edit')
   const copyId = searchParams?.get?.('copy')
 
+  // 2. Logic chọn Data (Giống hệt lúc dùng Zustand)
   let jobData = null
 
   if (editId && editJob && String(editJob.id) === String(editId)) {
@@ -35,7 +31,6 @@ export default function CreateAdsPage() {
   }, [editId, copyId])
 
   return (
-    // Truyền thẳng biến jobData tính toán ở trên
     <CreateForm type={mode} adsProps={jobData} />
   )
 }

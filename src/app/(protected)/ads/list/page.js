@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Cookies from 'js-cookie'
 
 // Components
@@ -32,12 +32,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 
-// Icons & Utils
 import 'remixicon/fonts/remixicon.css'
+
 import { getListJobsByUser } from '@/utils/ads/adsHandlers'
 import { useAuth } from '@/context/authContext'
 import { API_ROUTES } from '@/constants/apiRoute'
-import { useAdsStore } from '@/stores/adsStore'
+import { useAdsContext } from '@/context/adsContext' // use AdsContext instead of zustand
 
 // ============================================
 // HELPER FUNCTIONS
@@ -96,6 +96,9 @@ export default function AdsListPage() {
   const { user } = useAuth()
   const userId = user?.user_id || null
 
+  // Context (AdsProvider must wrap this component tree)
+  const { setEditJob, setCopyJob } = useAdsContext()
+
   // State
   const [searchTerm, setSearchTerm] = useState('')
   const [jobs, setJobs] = useState([])
@@ -105,7 +108,6 @@ export default function AdsListPage() {
   const [isPromoteOpen, setIsPromoteOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedAd, setSelectedAd] = useState(null)
-  const { setEditJob, setCopyJob } = useAdsStore()
 
   // Server metadata
   const [serverMeta, setServerMeta] = useState({
@@ -129,7 +131,6 @@ export default function AdsListPage() {
       try {
         const token = Cookies.get('vos_token')
 
-        // 🔥 Gửi currentPage và pageSize lên server
         const data = await getListJobsByUser({
           token,
           userId,
@@ -139,7 +140,6 @@ export default function AdsListPage() {
 
         if (!mounted) return
 
-        // Handle object response with pagination metadata
         if (data?.jobPosts && Array.isArray(data.jobPosts)) {
           setJobs(data.jobPosts)
           setServerMeta({
@@ -148,9 +148,7 @@ export default function AdsListPage() {
             totalJobs: data.totalJobs ?? 0,
             pageSize: data.pageSize ?? 12,
           })
-        }
-        // Fallback:  Handle plain array (no pagination)
-        else if (Array.isArray(data)) {
+        } else if (Array.isArray(data)) {
           setJobs(data)
           setServerMeta({
             currentPage: 1,
@@ -158,9 +156,7 @@ export default function AdsListPage() {
             totalJobs: data.length,
             pageSize: data.length
           })
-        }
-        // Handle unexpected format
-        else {
+        } else {
           setJobs([])
           setServerMeta({ currentPage: 1, totalPages: 1, totalJobs: 0, pageSize: 12 })
         }
@@ -177,7 +173,7 @@ export default function AdsListPage() {
 
     loadJobs()
     return () => { mounted = false }
-  }, [userId, currentPage]) // 🔥 Re-fetch khi currentPage thay đổi
+  }, [userId, currentPage])
 
   // ============================================
   // FILTERING (Client-side search trong page hiện tại)
@@ -200,15 +196,14 @@ export default function AdsListPage() {
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
   }
 
-  // UPDATED: save job to sessionStorage before navigate so Create page can read it and prefill
+  // Use AdsContext to pass job into Create page. AdsProvider must wrap routes (e.g. in layout).
   const handleEdit = (id) => {
     const job = jobs.find(j => j.id === id)
     if (job) {
       try {
-        // lưu vào zustand
         setEditJob(job)
       } catch (err) {
-        console.warn('Failed to set edit job in store', err)
+        console.warn('Failed to set edit job in context', err)
       }
     }
     router.push(`/ads/create?edit=${id}`)
@@ -220,7 +215,7 @@ export default function AdsListPage() {
       try {
         setCopyJob(job)
       } catch (err) {
-        console.warn('Failed to set copy job in store', err)
+        console.warn('Failed to set copy job in context', err)
       }
     }
     router.push(`/ads/create?copy=${id}`)
@@ -251,48 +246,21 @@ export default function AdsListPage() {
   // PAGINATION HELPERS
   // ============================================
 
-  // Tạo danh sách số trang thông minh (1 ...  5 6 7 ...  10)
   const getPaginationPages = () => {
     const { currentPage, totalPages } = serverMeta
     const pages = []
 
     if (totalPages <= 7) {
-      // Hiển thị tất cả nếu ít hơn 7 trang
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i)
-      }
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
     } else {
-      // Luôn hiển thị trang 1
       pages.push(1)
-
-      // Tính toán range xung quanh currentPage
       let start = Math.max(2, currentPage - 1)
       let end = Math.min(totalPages - 1, currentPage + 1)
-
-      // Điều chỉnh nếu currentPage gần đầu hoặc cuối
-      if (currentPage <= 3) {
-        end = 4
-      }
-      if (currentPage >= totalPages - 2) {
-        start = totalPages - 3
-      }
-
-      // Thêm "..." nếu cần
-      if (start > 2) {
-        pages.push('...')
-      }
-
-      // Thêm các trang ở giữa
-      for (let i = start; i <= end; i++) {
-        pages.push(i)
-      }
-
-      // Thêm "..." nếu cần
-      if (end < totalPages - 1) {
-        pages.push('...')
-      }
-
-      // Luôn hiển thị trang cuối
+      if (currentPage <= 3) end = 4
+      if (currentPage >= totalPages - 2) start = totalPages - 3
+      if (start > 2) pages.push('...')
+      for (let i = start; i <= end; i++) pages.push(i)
+      if (end < totalPages - 1) pages.push('...')
       pages.push(totalPages)
     }
 
@@ -339,7 +307,7 @@ export default function AdsListPage() {
           <h2 className="text-xl font-bold text-neutral-900">
             Posted Ads ({serverMeta.totalJobs})
           </h2>
-          <div className="flex items-center gap-1. 5 rounded-full bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-500">
+          <div className="flex items-center gap-1.5 rounded-full bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-500">
             <i className="ri-eye-line text-neutral-400"></i> Total Views: 12,515
           </div>
         </div>

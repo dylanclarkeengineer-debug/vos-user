@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { AdsProvider } from '@/context/adsContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -235,11 +236,10 @@ export default function DashboardLayout({ children }) {
               <Button
                 asChild
                 variant="ghost"
-                className={`group h-11 w-full justify-start rounded-sm px-3 transition-all duration-200 ${
-                  pathname === '/dashboard'
-                    ? 'bg-neutral-900 text-white shadow-sm hover:bg-neutral-800 hover:text-white'
-                    : 'text-neutral-800 hover:bg-neutral-50'
-                } `}
+                className={`group h-11 w-full justify-start rounded-sm px-3 transition-all duration-200 ${pathname === '/dashboard'
+                  ? 'bg-neutral-900 text-white shadow-sm hover:bg-neutral-800 hover:text-white'
+                  : 'text-neutral-800 hover:bg-neutral-50'
+                  } `}
               >
                 <Link href="/dashboard" className="flex items-center gap-3">
                   <i
@@ -299,11 +299,10 @@ export default function DashboardLayout({ children }) {
                                 key={idx}
                                 asChild
                                 variant="ghost"
-                                className={`h-9 w-full justify-start gap-3 rounded-md px-3 text-sm transition-all duration-200 ${
-                                  isActive
-                                    ? 'bg-neutral-900 font-bold text-white shadow-sm hover:bg-neutral-800 hover:text-white'
-                                    : 'font-normal text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
-                                } `}
+                                className={`h-9 w-full justify-start gap-3 rounded-md px-3 text-sm transition-all duration-200 ${isActive
+                                  ? 'bg-neutral-900 font-bold text-white shadow-sm hover:bg-neutral-800 hover:text-white'
+                                  : 'font-normal text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                                  } `}
                               >
                                 <Link href={item.href}>
                                   <i
@@ -381,7 +380,11 @@ export default function DashboardLayout({ children }) {
         </header>
 
         <div className="flex-1 overflow-y-auto scroll-smooth p-8">
-          <div className="mx-auto max-w-7xl pb-10">{children}</div>
+          <div className="mx-auto max-w-7xl pb-10">
+            <AdsProvider>
+              {children}
+            </AdsProvider>
+          </div>
         </div>
       </main>
     </div>

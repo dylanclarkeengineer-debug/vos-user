@@ -21,7 +21,6 @@ import { PhoneInput } from '@/components/ui/phone-input'
 import 'remixicon/fonts/remixicon.css'
 
 import { getAllCategories, createNewJobByUser } from '@/utils/ads/adsHandlers'
-import { US_STATES } from '@/constants/ads/states'
 import { useAuth } from '@/context/authContext'
 import { API_ROUTES } from '@/constants/apiRoute'
 import { INITIAL_FORM_STATE, MOCK_USER_BUSINESSES, PLATFORM_DOMAINS } from '@/constants/ads/initialStates'
@@ -193,11 +192,14 @@ export default function AdsCreateForm({ type, adsProps }) {
 
         // Social links -> array
         if (job.contact_info?.social_links && typeof job.contact_info.social_links === 'object') {
-            const links = Object.entries(job.contact_info.social_links).map(([platform, url]) => ({
-                platform,
-                url,
-                error: validateSocialLink(platform, url)
-            }))
+            const links = Object.entries(job.contact_info.social_links).map(([key, url]) => {
+                const platform = key.charAt(0).toUpperCase() + key.slice(1);
+                return {
+                    platform,
+                    url,
+                    error: validateSocialLink(platform, url)
+                }
+            })
             setSocialLinks(links)
         }
 
