@@ -41,18 +41,18 @@ const MENU_ITEMS = [
         href: '/ads/list',
         title: 'My Posted Ads',
       },
-      {
-        label: 'Favorite Ads',
-        icon: 'ri-heart-line',
-        href: '/ads/favorites',
-        title: 'Favorite Ads',
-      },
-      {
-        label: 'Job Suggestions',
-        icon: 'ri-lightbulb-line',
-        href: '/ads/suggestions',
-        title: 'Job Suggestions',
-      },
+      // {
+      //   label: 'Favorite Ads',
+      //   icon: 'ri-heart-line',
+      //   href: '/ads/favorites',
+      //   title: 'Favorite Ads',
+      // },
+      // {
+      //   label: 'Job Suggestions',
+      //   icon: 'ri-lightbulb-line',
+      //   href: '/ads/suggestions',
+      //   title: 'Job Suggestions',
+      // },
       {
         label: 'Applied Jobs',
         icon: 'ri-briefcase-line',

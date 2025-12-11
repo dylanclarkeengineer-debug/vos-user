@@ -13,7 +13,7 @@ export default function CreateAdsPage() {
   const { editJob, copyJob } = useAdsContext()
 
   const editId = searchParams?.get?.('edit')
-  const copyId = searchParams?.get?.('copy')
+  const copyId = searchParams?.get?.('duplicate')
 
   // 2. Logic chọn Data (Giống hệt lúc dùng Zustand)
   let jobData = null
@@ -26,7 +26,7 @@ export default function CreateAdsPage() {
 
   useEffect(() => {
     if (editId) setMode('edit')
-    else if (copyId) setMode('copy')
+    else if (copyId) setMode('duplicate')
     else setMode('new')
   }, [editId, copyId])
 

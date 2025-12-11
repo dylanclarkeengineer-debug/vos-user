@@ -592,17 +592,19 @@ export default function AdsCreateForm({ type, adsProps }) {
                 addressInfo={addressInfo}
             />
 
-            <aside className="hidden lg:block w-64 shrink-0 sticky top-0 h-screen overflow-y-auto border-r border-gray-200 bg-white">
-                <ScrollSpyNavigation
-                    sections={sections}
-                    offset={100}
-                    onCancel={onCancel}
-                    onSaveDraft={onSaveDraft}
-                    onPublish={onPublish}
-                    isLoading={isLoading}
-                    publishEnabled={allValid}
-                    onValidationChange={handleValidationsFromSpy}
-                />
+            <aside className="hidden lg:block w-72 shrink-0">
+                <div className="sticky top-24 space-y-4">
+                    <ScrollSpyNavigation
+                        sections={sections}
+                        offset={100}
+                        onCancel={onCancel}
+                        onSaveDraft={onSaveDraft}
+                        onPublish={onPublish}
+                        isLoading={isLoading}
+                        publishEnabled={allValid}
+                        onValidationChange={handleValidationsFromSpy}
+                    />
+                </div>
             </aside>
 
             <div className="flex-1 min-w-0">
@@ -615,9 +617,9 @@ export default function AdsCreateForm({ type, adsProps }) {
                                     <strong className="block font-semibold">Error</strong>
                                     <p className="mt-1">{errorMessage}</p>
                                 </div>
-                                <button type="button" onClick={() => setErrorMessage(null)} className="ml-4 text-red-600 hover:text-red-800">
+                                <Button variant="ghost" onClick={() => setErrorMessage(null)} className="ml-4">
                                     <i className="ri-close-line"></i>
-                                </button>
+                                </Button>
                             </div>
                         )}
 
@@ -771,41 +773,40 @@ export default function AdsCreateForm({ type, adsProps }) {
                                     </div>
                                 </div>
 
-                                {/* 🔥 NEW SALARY SECTION - Simplified with auto-detect */}
-                                <div className="col-span-1 md:col-span-2 mt-2">
-                                    <div className="rounded-xl border border-gray-200 bg-gray-50/80 p-5 space-y-4">
+                                {/* SALARY INFORMATION - Full Width, No Border */}
+                                <div id="salary-info" className="col-span-1 md:col-span-2 space-y-4 pt-2">
 
-                                        {/* Header with Negotiable Checkbox */}
-                                        <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                                            <div className="flex items-center gap-2">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600">
-                                                    <i className="ri-money-dollar-circle-fill text-xl"></i>
-                                                </div>
-                                                <div>
-                                                    <Label className="text-base font-bold text-gray-900 block">Salary Information</Label>
-                                                    <p className="text-[11px] text-gray-500 font-medium">Optional - Auto-detected based on input</p>
-                                                </div>
-                                            </div>
-
-                                            {/* Negotiable Checkbox */}
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={salaryData.negotiable}
-                                                    onChange={(e) => setSalaryData(prev => ({
-                                                        ...prev,
-                                                        negotiable: e.target.checked
-                                                    }))}
-                                                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
-                                                />
-                                                <span className="text-sm font-semibold text-gray-700">Negotiable</span>
-                                            </label>
+                                    {/* Header: Title only, no border bottom */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                        <div>
+                                            <Label className="text-base font-bold text-gray-900 block mb-1">
+                                                Salary Information
+                                            </Label>
+                                            <p className="text-xs text-gray-500">Optional - Auto-detected based on input.</p>
                                         </div>
 
-                                        {/* Salary Input Row */}
-                                        <div className="flex flex-wrap items-center gap-3">
-                                            {/* Min Input */}
-                                            <div className="flex-1 min-w-[120px]">
+                                        {/* Negotiable Checkbox */}
+                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                            <input
+                                                type="checkbox"
+                                                checked={salaryData.negotiable}
+                                                onChange={(e) => setSalaryData(prev => ({
+                                                    ...prev,
+                                                    negotiable: e.target.checked
+                                                }))}
+                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                                            />
+                                            <span className="text-sm font-medium text-gray-700">Negotiable</span>
+                                        </label>
+                                    </div>
+
+                                    {/* Inputs Grid - Full Width */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                                        {/* Left Column: Range Inputs */}
+                                        <div className="flex items-end gap-3 w-full">
+                                            <div className="flex-1 space-y-1.5">
+                                                <Label className="text-xs font-bold text-gray-700">Min</Label>
                                                 <Input
                                                     type="number"
                                                     placeholder="From"
@@ -813,14 +814,14 @@ export default function AdsCreateForm({ type, adsProps }) {
                                                     onChange={(e) => handleSalaryChange('min', e.target.value)}
                                                     disabled={salaryData.negotiable}
                                                     min="0"
-                                                    className="h-11 bg-white border-gray-300 disabled:bg-gray-100 disabled:text-gray-400"
+                                                    className="h-10 bg-white border-gray-300 focus-visible:ring-blue-600 disabled:bg-gray-50 disabled:text-gray-400 w-full"
                                                 />
                                             </div>
 
-                                            <span className="text-gray-400 font-bold">—</span>
+                                            <span className="text-gray-400 font-bold mb-2 text-lg">—</span>
 
-                                            {/* Max Input */}
-                                            <div className="flex-1 min-w-[120px]">
+                                            <div className="flex-1 space-y-1.5">
+                                                <Label className="text-xs font-bold text-gray-700">Max</Label>
                                                 <Input
                                                     type="number"
                                                     placeholder="To"
@@ -828,65 +829,67 @@ export default function AdsCreateForm({ type, adsProps }) {
                                                     onChange={(e) => handleSalaryChange('max', e.target.value)}
                                                     disabled={salaryData.negotiable}
                                                     min="0"
-                                                    className="h-11 bg-white border-gray-300 disabled:bg-gray-100 disabled:text-gray-400"
+                                                    className="h-10 bg-white border-gray-300 focus-visible:ring-blue-600 disabled:bg-gray-50 disabled:text-gray-400 w-full"
                                                 />
                                             </div>
-
-                                            {/* Currency Selector */}
-                                            <Select
-                                                value={salaryData.currency}
-                                                onValueChange={(val) => handleSalaryChange('currency', val)}
-                                                disabled={salaryData.negotiable}
-                                            >
-                                                <SelectTrigger className="w-[100px] h-11 bg-white border-gray-300 disabled:bg-gray-100">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="USD">USD</SelectItem>
-                                                    <SelectItem value="VND">VND</SelectItem>
-                                                    <SelectItem value="EUR">EUR</SelectItem>
-                                                    <SelectItem value="GBP">GBP</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-
-                                            {/* Pay Period Selector */}
-                                            <Select
-                                                value={salaryData.unit}
-                                                onValueChange={(val) => handleSalaryChange('unit', val)}
-                                                disabled={salaryData.negotiable}
-                                            >
-                                                <SelectTrigger className="w-[130px] h-11 bg-white border-gray-300 disabled:bg-gray-100">
-                                                    <SelectValue />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {SALARY_UNITS.map((u) => (
-                                                        <SelectItem key={u.value} value={u.value}>
-                                                            {u.label}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
                                         </div>
 
-                                        {/* Auto-detected Type Display */}
-                                        <div className="rounded-md bg-blue-50 border border-blue-200 px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                <i className="ri-information-line text-blue-600"></i>
-                                                <div className="flex-1">
-                                                    <span className="text-xs font-semibold text-blue-900">
-                                                        Auto-detected:
-                                                    </span>
-                                                    <span className="ml-2 text-sm font-bold text-blue-700">
-                                                        {generateSalaryText(salaryData) || 'Enter salary range'}
-                                                    </span>
-                                                </div>
-                                                <span className="text-[10px] text-blue-600 font-mono bg-blue-100 px-2 py-0.5 rounded">
-                                                    {salaryData.type.toUpperCase()}
-                                                </span>
+                                        {/* Right Column: Selectors */}
+                                        <div className="flex items-end gap-3 w-full">
+                                            <div className="w-1/3 space-y-1.5">
+                                                <Label className="text-xs font-bold text-gray-700">Currency</Label>
+                                                <Select
+                                                    value={salaryData.currency}
+                                                    onValueChange={(val) => handleSalaryChange('currency', val)}
+                                                    disabled={salaryData.negotiable}
+                                                >
+                                                    <SelectTrigger className="h-10 bg-white border-gray-300 disabled:bg-gray-50 w-full">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="USD">USD</SelectItem>
+                                                        <SelectItem value="VND">VND</SelectItem>
+                                                        <SelectItem value="EUR">EUR</SelectItem>
+                                                        <SelectItem value="GBP">GBP</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
+                                            <div className="w-2/3 space-y-1.5">
+                                                <Label className="text-xs font-bold text-gray-700">Period</Label>
+                                                <Select
+                                                    value={salaryData.unit}
+                                                    onValueChange={(val) => handleSalaryChange('unit', val)}
+                                                    disabled={salaryData.negotiable}
+                                                >
+                                                    <SelectTrigger className="h-10 bg-white border-gray-300 disabled:bg-gray-50 w-full">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {SALARY_UNITS.map((u) => (
+                                                            <SelectItem key={u.value} value={u.value}>
+                                                                {u.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                             </div>
                                         </div>
-
                                     </div>
+
+                                    {/* Preview - Minimal text only */}
+                                    {!salaryData.negotiable && (
+                                        <div className="text-xs text-gray-500 font-medium flex items-center gap-1.5 mt-1">
+                                            <i className="ri-eye-line text-gray-400"></i>
+                                            <span>Preview:</span>
+                                            <span className="text-gray-900 font-bold">
+                                                {generateSalaryText(salaryData) || 'Not specified'}
+                                            </span>
+                                            <span className="text-[10px] uppercase text-gray-400 ml-1 border border-gray-200 px-1.5 rounded bg-gray-50">
+                                                {salaryData.type}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Applicant Requirements - Full width */}
@@ -955,8 +958,8 @@ export default function AdsCreateForm({ type, adsProps }) {
                                     </h2>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-medium text-blue-800">Manual Entry Source (URL)</Label>
-                                    <Input placeholder="https://example.com/source-post" className="border-blue-200 bg-white" value={formData.manualEntrySource} onChange={(e) => handleInputChange('manualEntrySource', e.target.value)} />
+                                    <Label className={ADS_STYLES.LABEL}>Manual Entry Source (URL)</Label>
+                                    <Input placeholder="https://example.com/source-post" className={ADS_STYLES.INPUT_BASE} value={formData.manualEntrySource} onChange={(e) => handleInputChange('manualEntrySource', e.target.value)} />
                                     <p className="text-xs text-blue-600">Link to the original source if manually entered. </p>
                                 </div>
                             </div>
@@ -967,22 +970,22 @@ export default function AdsCreateForm({ type, adsProps }) {
                             <h2 className="mb-6 text-xl font-bold text-gray-900">Location & Contact</h2>
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-medium text-gray-700">Show Location? </Label>
+                                    <Label className={ADS_STYLES.LABEL}>Show Location? </Label>
                                     <Select value={formData.showLocation} onValueChange={(val) => handleInputChange('showLocation', val)}>
-                                        <SelectTrigger className="w-full border-gray-300 bg-white"><SelectValue /></SelectTrigger>
+                                        <SelectTrigger className={ADS_STYLES.SELECT_TRIGGER}><SelectValue /></SelectTrigger>
                                         <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-medium text-gray-700">Contact Email <span className="text-red-500">*</span></Label>
-                                    <Input type="email" placeholder="your@email.com" className="border-gray-300 bg-white" value={formData.contactEmail} onChange={(e) => handleInputChange('contactEmail', e.target.value)} required />
+                                    <Label className={ADS_STYLES.LABEL}>Contact Email <span className="text-red-500">*</span></Label>
+                                    <Input type="email" placeholder="your@email.com" className={ADS_STYLES.INPUT_BASE} value={formData.contactEmail} onChange={(e) => handleInputChange('contactEmail', e.target.value)} required />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-medium text-gray-700">Contact Phone <span className="text-red-500">*</span></Label>
+                                    <Label className={ADS_STYLES.LABEL}>Contact Phone <span className="text-red-500">*</span></Label>
                                     <PhoneInput
                                         defaultCountry="US"
                                         placeholder="(555) 123-4567"
-                                        className="border-gray-300 bg-white"
+                                        className={ADS_STYLES.INPUT_BASE}
                                         value={formData.contactPhone}
                                         onChange={(value) => {
                                             if (value && value.length > 12) return;
@@ -992,11 +995,11 @@ export default function AdsCreateForm({ type, adsProps }) {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-medium text-gray-700">Secondary Phone (Optional)</Label>
+                                    <Label className={ADS_STYLES.LABEL}>Secondary Phone (Optional)</Label>
                                     <PhoneInput
                                         defaultCountry="US"
                                         placeholder="(555) 987-6543"
-                                        className="border-gray-300 bg-white"
+                                        className={ADS_STYLES.INPUT_BASE}
                                         value={formData.secondaryPhone}
                                         onChange={(value) => {
                                             if (value && value.length > 12) return;
@@ -1013,20 +1016,19 @@ export default function AdsCreateForm({ type, adsProps }) {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label className="text-sm font-medium text-gray-700">Zip Code</Label>
-                                    <Input placeholder="90210" className="border-gray-300 bg-white" value={formData.zipcode} onChange={(e) => handleInputChange('zipcode', e.target.value)} />
+                                    <Label className={ADS_STYLES.LABEL}>Zip Code</Label>
+                                    <Input placeholder="90210" className={ADS_STYLES.INPUT_BASE} value={formData.zipcode} onChange={(e) => handleInputChange('zipcode', e.target.value)} />
                                 </div>
                                 <div className='space-y-2'>
-                                    <Label className="text-sm font-medium text-gray-700">Website</Label>
-                                    <Input placeholder="https://yourwebsite.com" className="border-gray-300 bg-white" value={formData.website} onChange={(e) => handleInputChange('website', e.target.value)} />
+                                    <Label className={ADS_STYLES.LABEL}>Website</Label>
+                                    <Input placeholder="https://yourwebsite.com" className={ADS_STYLES.INPUT_BASE} value={formData.website} onChange={(e) => handleInputChange('website', e.target.value)} />
                                 </div>
                             </div>
 
                             <div className="mt-6 border-t border-gray-100 pt-6">
                                 <div className="mb-4 flex flex-row items-center justify-between">
-                                    <Label className="text-sm font-bold text-gray-900">Social Media Links</Label>
+                                    <Label className={ADS_STYLES.LABEL}>Social Media Links</Label>
                                     <Button
-                                        type="button"
                                         onClick={addSocialLink}
                                         variant="outline"
                                         size="sm"
@@ -1073,7 +1075,7 @@ export default function AdsCreateForm({ type, adsProps }) {
                                                 className={`flex-1 bg-white border-gray-300 ${item.error ? 'border-red-500 focus-visible:ring-red-200' : ''}`}
                                             />
 
-                                            <Button type="button" variant="ghost" onClick={() => removeSocialLink(idx)} className="text-gray-400 hover:text-red-500 hover:bg-red-50 px-2">
+                                            <Button variant="ghost" onClick={() => removeSocialLink(idx)} className="px-2">
                                                 <i className="ri-delete-bin-line"></i>
                                             </Button>
                                         </div>
@@ -1092,7 +1094,7 @@ export default function AdsCreateForm({ type, adsProps }) {
                         <div id="related-business" className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm scroll-mt-24">
                             <h2 className="mb-6 text-xl font-bold text-gray-900">Related Business</h2>
                             <div className="space-y-2">
-                                <Label className="text-sm font-medium text-gray-700">Link to Existing Business (Optional)</Label>
+                                <Label className={ADS_STYLES.LABEL}>Link to Existing Business (Optional)</Label>
                                 <Select
                                     value={formData.relatedBusiness || 'none'}
                                     onValueChange={(val) => handleInputChange('relatedBusiness', val)}
@@ -1134,13 +1136,13 @@ export default function AdsCreateForm({ type, adsProps }) {
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
 
                                             {!img.isMain && (
-                                                <button
-                                                    type="button"
+                                                <Button
+                                                    variant="brand-subtle"
                                                     onClick={() => handleSetMainImage(i)}
-                                                    className="rounded-full bg-white/20 px-2 py-1 text-[10px] font-medium text-white backdrop-blur-md hover:bg-blue-600 transition-colors"
+                                                    className="bg-white/20 px-2 py-1"
                                                 >
                                                     Set Cover
-                                                </button>
+                                                </Button>
                                             )}
 
                                             {img.isMain && (
@@ -1149,13 +1151,13 @@ export default function AdsCreateForm({ type, adsProps }) {
                                                 </span>
                                             )}
 
-                                            <button
-                                                type="button"
+                                            <Button
+                                                variant="icon-destructive"
                                                 onClick={() => removeImage(i)}
                                                 className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center hover: bg-red-600 transition-colors"
                                             >
                                                 <i className="ri-delete-bin-line text-xs"></i>
-                                            </button>
+                                            </Button>
                                         </div>
 
                                         {img.isMain && (
@@ -1191,7 +1193,10 @@ export default function AdsCreateForm({ type, adsProps }) {
                                 onClick={(e) => handleSubmit(e, 'active')}
                                 disabled={isLoading}
                             >
-                                {isLoading ? 'Posting...' : 'Publish Post'}
+                                {isLoading
+                                    ? (type === 'edit' ? 'Updating...' : 'Posting...')
+                                    : (type === 'edit' ? 'Update Post' : 'Publish Post')
+                                }
                             </Button>
                         </div>
                     </form>

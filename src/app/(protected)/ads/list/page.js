@@ -8,7 +8,7 @@ import Cookies from 'js-cookie'
 // Components
 import ConfirmDeletePost from '@/components/ads/ConfirmDeactivePost'
 import PromoteAdModal from '@/components/ads/PromoteAdModal'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button' // Đảm bảo import Button mới
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -37,7 +37,7 @@ import 'remixicon/fonts/remixicon.css'
 import { getListJobsByUser } from '@/utils/ads/adsHandlers'
 import { useAuth } from '@/context/authContext'
 import { API_ROUTES } from '@/constants/apiRoute'
-import { useAdsContext } from '@/context/adsContext' // use AdsContext instead of zustand
+import { useAdsContext } from '@/context/adsContext'
 
 // ============================================
 // HELPER FUNCTIONS
@@ -96,20 +96,17 @@ export default function AdsListPage() {
   const { user } = useAuth()
   const userId = user?.user_id || null
 
-  // Context (AdsProvider must wrap this component tree)
   const { setEditJob, setCopyJob } = useAdsContext()
 
-  // State
   const [searchTerm, setSearchTerm] = useState('')
   const [jobs, setJobs] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [fetchError, setFetchError] = useState(null)
-  const [currentPage, setCurrentPage] = useState(1) // Server page
+  const [currentPage, setCurrentPage] = useState(1)
   const [isPromoteOpen, setIsPromoteOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedAd, setSelectedAd] = useState(null)
 
-  // Server metadata
   const [serverMeta, setServerMeta] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -117,26 +114,15 @@ export default function AdsListPage() {
     pageSize: 12,
   })
 
-  // ============================================
-  // DATA FETCHING - SERVER-SIDE PAGINATION
-  // ============================================
-
+  // Data Fetching
   useEffect(() => {
     let mounted = true
-
     const loadJobs = async () => {
       setIsLoading(true)
       setFetchError(null)
-
       try {
         const token = Cookies.get('vos_token')
-
-        const data = await getListJobsByUser({
-          token,
-          userId,
-          page: currentPage,
-          pageSize: 12
-        })
+        const data = await getListJobsByUser({ token, userId, page: currentPage, pageSize: 12 })
 
         if (!mounted) return
 
@@ -150,12 +136,7 @@ export default function AdsListPage() {
           })
         } else if (Array.isArray(data)) {
           setJobs(data)
-          setServerMeta({
-            currentPage: 1,
-            totalPages: 1,
-            totalJobs: data.length,
-            pageSize: data.length
-          })
+          setServerMeta({ currentPage: 1, totalPages: 1, totalJobs: data.length, pageSize: data.length })
         } else {
           setJobs([])
           setServerMeta({ currentPage: 1, totalPages: 1, totalJobs: 0, pageSize: 12 })
@@ -170,14 +151,9 @@ export default function AdsListPage() {
         if (mounted) setIsLoading(false)
       }
     }
-
     loadJobs()
     return () => { mounted = false }
   }, [userId, currentPage])
-
-  // ============================================
-  // FILTERING (Client-side search trong page hiện tại)
-  // ============================================
 
   const filteredJobs = searchTerm
     ? jobs.filter(job =>
@@ -186,70 +162,33 @@ export default function AdsListPage() {
     )
     : jobs
 
-  // ============================================
-  // EVENT HANDLERS
-  // ============================================
-
+  // Handlers
   const handleGoToPost = (id) => {
     if (!id) return
     const url = API_ROUTES.listingPage(id)
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
   }
 
-  // Use AdsContext to pass job into Create page. AdsProvider must wrap routes (e.g. in layout).
   const handleEdit = (id) => {
     const job = jobs.find(j => j.id === id)
-    if (job) {
-      try {
-        setEditJob(job)
-      } catch (err) {
-        console.warn('Failed to set edit job in context', err)
-      }
-    }
+    if (job) setEditJob(job)
     router.push(`/ads/create?edit=${id}`)
   }
 
   const handleDuplicate = (id) => {
     const job = jobs.find(j => j.id === id)
-    if (job) {
-      try {
-        setCopyJob(job)
-      } catch (err) {
-        console.warn('Failed to set copy job in context', err)
-      }
-    }
-    router.push(`/ads/create?copy=${id}`)
+    if (job) setCopyJob(job)
+    router.push(`/ads/create?duplicate=${id}`)
   }
 
-  const handlePauseClick = (ad) => {
-    setSelectedAd(ad)
-    setIsDeleteOpen(true)
-  }
-
-  const handlePromoteClick = (ad) => {
-    setSelectedAd(ad)
-    setIsPromoteOpen(true)
-  }
-
-  const goToPage = (page) => {
-    if (page >= 1 && page <= serverMeta.totalPages) {
-      setCurrentPage(page)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-  }
-
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value)
-  }
-
-  // ============================================
-  // PAGINATION HELPERS
-  // ============================================
+  const handlePauseClick = (ad) => { setSelectedAd(ad); setIsDeleteOpen(true) }
+  const handlePromoteClick = (ad) => { setSelectedAd(ad); setIsPromoteOpen(true) }
+  const goToPage = (page) => { if (page >= 1 && page <= serverMeta.totalPages) { setCurrentPage(page); window.scrollTo({ top: 0, behavior: 'smooth' }) } }
+  const handleSearchChange = (e) => setSearchTerm(e.target.value)
 
   const getPaginationPages = () => {
     const { currentPage, totalPages } = serverMeta
     const pages = []
-
     if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) pages.push(i)
     } else {
@@ -263,13 +202,8 @@ export default function AdsListPage() {
       if (end < totalPages - 1) pages.push('...')
       pages.push(totalPages)
     }
-
     return pages
   }
-
-  // ============================================
-  // RENDER
-  // ============================================
 
   return (
     <div className="animate-fade-in mx-auto max-w-[1400px] px-4 pt-6 pb-32 font-sans text-neutral-900">
@@ -278,13 +212,13 @@ export default function AdsListPage() {
       <div className="mb-8 flex flex-col gap-4 lg:flex-row">
         <Input
           placeholder="Search by title or ad code..."
-          className="h-10 w-full border-neutral-200 bg-white focus-visible:ring-1 focus-visible:ring-blue-600 lg:max-w-md"
+          className="h-10 border-neutral-200 bg-white focus-visible:ring-1 focus-visible:ring-blue-600 w-full lg:max-w-md"
           value={searchTerm}
           onChange={handleSearchChange}
         />
         <div className="ml-auto flex w-full gap-2 lg:w-auto">
           <Select defaultValue="all">
-            <SelectTrigger className="h-10 w-[140px] bg-white">
+            <SelectTrigger className="w-[140px] h-10 bg-white">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -292,7 +226,8 @@ export default function AdsListPage() {
             </SelectContent>
           </Select>
           <Link href="/ads/create">
-            <Button className="h-10 bg-blue-600 px-6 font-bold text-white hover:bg-blue-700 w-full lg:w-auto">
+            {/* UPDATED: Dùng variant 'brand' */}
+            <Button variant="brand" className="h-10 w-full lg:w-auto px-6 font-bold">
               <i className="ri-add-line mr-2"></i> Create New Ad
             </Button>
           </Link>
@@ -312,12 +247,7 @@ export default function AdsListPage() {
           </div>
         </div>
 
-        {/* Error Banner */}
-        {fetchError && (
-          <div className="border-b border-red-100 bg-red-50 px-6 py-3 text-sm text-red-800">
-            {fetchError}
-          </div>
-        )}
+        {fetchError && <div className="border-b border-red-100 bg-red-50 px-6 py-3 text-sm text-red-800">{fetchError}</div>}
 
         {/* Table */}
         <div className="flex-1 overflow-auto">
@@ -325,21 +255,11 @@ export default function AdsListPage() {
             <Table>
               <TableHeader>
                 <TableRow className="border-b border-neutral-100 hover:bg-transparent">
-                  <TableHead className="w-[45%] py-4 pl-6 text-xs font-bold tracking-tight text-neutral-900 uppercase">
-                    Title
-                  </TableHead>
-                  <TableHead className="w-[5%] py-4 text-center text-xs font-bold tracking-tight text-neutral-900 uppercase">
-                    Actions
-                  </TableHead>
-                  <TableHead className="w-[10%] py-4 text-center text-xs font-bold tracking-tight text-neutral-500 uppercase">
-                    Views
-                  </TableHead>
-                  <TableHead className="w-[15%] py-4 text-left text-xs font-bold tracking-tight text-neutral-500 uppercase">
-                    Engagement
-                  </TableHead>
-                  <TableHead className="w-[25%] py-4 text-left text-xs font-bold tracking-tight text-neutral-500 uppercase">
-                    Details
-                  </TableHead>
+                  <TableHead className="w-[45%] pl-6 py-4 text-xs font-bold tracking-tight text-neutral-900 uppercase">Title</TableHead>
+                  <TableHead className="w-[5%] text-center py-4 text-xs font-bold tracking-tight text-neutral-900 uppercase">Actions</TableHead>
+                  <TableHead className="w-[10%] text-center py-4 text-xs font-bold tracking-tight text-neutral-500 uppercase">Views</TableHead>
+                  <TableHead className="w-[15%] text-left py-4 text-xs font-bold tracking-tight text-neutral-500 uppercase">Engagement</TableHead>
+                  <TableHead className="w-[25%] text-left py-4 text-xs font-bold tracking-tight text-neutral-500 uppercase">Details</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -361,44 +281,34 @@ export default function AdsListPage() {
                   </TableRow>
                 ) : (
                   filteredJobs.map((item) => {
-                    const postedDate = item.createdAt
-                      ? formatUnixToLocal(item.createdAt)
-                      : '—'
-
-                    const leaseExpiration = item.sales_info?.lease_expiration
-                      ? formatIsoToLocal(item.sales_info.lease_expiration)
-                      : null
+                    const postedDate = item.createdAt ? formatUnixToLocal(item.createdAt) : '—'
+                    const leaseExpiration = item.sales_info?.lease_expiration ? formatIsoToLocal(item.sales_info.lease_expiration) : null
 
                     return (
-                      <TableRow
-                        key={item.id}
-                        className="border-b border-neutral-100 transition-colors hover:bg-neutral-50/30"
-                      >
-                        {/* Col 1: Title & Description */}
-                        <TableCell className="py-6 pl-6 align-top">
+                      <TableRow key={item.id} className="border-b border-neutral-100 transition-colors hover:bg-neutral-50/30">
+                        {/* Col 1 */}
+                        <TableCell className="py-6 align-top pl-6">
                           <div className="flex flex-col items-start gap-1 max-w-[350px] lg:max-w-md">
-                            <span className="font-mono text-[10px] text-neutral-400 truncate w-full">
-                              Ad Code: {item.id}
-                            </span>
-                            <h3
-                              className="mb-1 cursor-pointer text-base leading-tight font-bold text-neutral-900 transition-colors hover:text-blue-600 line-clamp-2 break-words w-full"
-                              title={item.title}
-                              onClick={() => handleGoToPost(item.id)}
-                            >
+                            <span className="font-mono text-[10px] text-neutral-400 break-all">Ad Code: {item.id}</span>
+                            <h3 className="mb-1 cursor-pointer text-base leading-tight font-bold text-neutral-900 transition-colors hover:text-blue-600 line-clamp-2 break-words w-full"
+                              title={item.title} onClick={() => handleGoToPost(item.id)}>
                               {item.title || "Untitled Post"}
                             </h3>
-                            <span className={`${getStatusStyle(item.status)} mb-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase`}>
+                            <span className={`mb-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide uppercase ${getStatusStyle(item.status)}`}>
                               {item.status || 'Expired'}
                             </span>
-                            <p className="mb-2 text-sm leading-relaxed text-neutral-500 line-clamp-2 break-words w-full">
+                            <p className="mb-2 text-sm leading-relaxed text-neutral-500 line-clamp-3 break-words w-full">
                               {item.description || "No description available. "}
                             </p>
                             <div className="mb-3 text-sm font-bold text-blue-600 truncate w-full" title={getSalaryDisplay(item)}>
                               {getSalaryDisplay(item)}
                             </div>
+
+                            {/* UPDATED: Dùng variant 'brand-subtle' và size 'xs' */}
                             <Button
-                              variant="secondary"
-                              className="h-7 rounded-sm border-none bg-blue-50 px-3 text-[10px] font-bold tracking-wider text-blue-600 uppercase hover:bg-blue-100 hover:text-blue-700"
+                              variant="brand-subtle"
+                              size="xs"
+                              className="rounded-sm"
                               onClick={() => handleGoToPost(item.id)}
                             >
                               <i className="ri-eye-line mr-1.5"></i> View Post
@@ -407,39 +317,32 @@ export default function AdsListPage() {
                         </TableCell>
 
                         {/* Col 2: Actions */}
-                        <TableCell className="py-6 text-center align-top">
+                        <TableCell className="py-6 align-top text-center">
                           <div className="flex flex-col items-center gap-1">
-                            <ActionIcon icon="ri-pencil-line" tooltip="Edit" onClick={() => handleEdit(item.id)} />
-                            <ActionIcon icon="ri-rocket-line" tooltip="Promote" color="text-orange-500 hover:bg-orange-50" onClick={() => handlePromoteClick(item)} />
-                            <ActionIcon icon="ri-file-copy-line" tooltip="Copy" onClick={() => handleDuplicate(item.id)} />
-                            <ActionIcon icon="ri-delete-bin-line" tooltip="Delete" color="text-red-500 hover:bg-red-50" onClick={() => handlePauseClick(item)} />
+                            {/* UPDATED: Truyền variant vào ActionIcon */}
+                            <ActionIcon icon="ri-pencil-line" tooltip="Edit" onClick={() => handleEdit(item.id)} variant="icon-ghost" />
+                            <ActionIcon icon="ri-rocket-line" tooltip="Promote" onClick={() => handlePromoteClick(item)} variant="icon-warning" />
+                            <ActionIcon icon="ri-file-copy-line" tooltip="Copy" onClick={() => handleDuplicate(item.id)} variant="icon-ghost" />
+                            <ActionIcon icon="ri-delete-bin-line" tooltip="Delete" onClick={() => handlePauseClick(item)} variant="icon-destructive" />
                           </div>
                         </TableCell>
 
-                        {/* Col 3: Views */}
-                        <TableCell className="py-6 text-center align-top">
-                          <span className="mt-2 block text-xl font-bold text-neutral-900">
-                            {item.views ?? 0}
-                          </span>
+                        {/* Other Cols... */}
+                        <TableCell className="py-6 align-top text-center">
+                          <span className="mt-2 block text-xl font-bold text-neutral-900">{item.views ?? 0}</span>
                         </TableCell>
-
-                        {/* Col 4: Engagement */}
                         <TableCell className="py-6 align-top">
                           <div className="mt-1 flex flex-col gap-3">
                             <EngagementItem icon="ri-file-list-3-line" label="Applications" value={item.engagement?.applications ?? 0} />
                             <EngagementItem icon="ri-share-forward-line" label="Shares" value={item.engagement?.shares ?? 0} />
                           </div>
                         </TableCell>
-
-                        {/* Col 5: Details */}
                         <TableCell className="py-6 align-top">
                           <div className="mt-1 space-y-2.5">
                             <DetailRow icon="ri-folder-line" text={item.category || '—'} />
                             <DetailRow icon="ri-map-pin-line" text={formatLocation(item.address_info)} />
                             <DetailRow icon="ri-calendar-line" text={`Posted: ${postedDate}`} />
-                            {leaseExpiration && (
-                              <DetailRow icon="ri-building-line" text={`Lease Exp: ${leaseExpiration}`} color="text-orange-700" />
-                            )}
+                            {leaseExpiration && <DetailRow icon="ri-building-line" text={`Lease Exp: ${leaseExpiration}`} color="text-orange-700" />}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -451,26 +354,23 @@ export default function AdsListPage() {
           </TooltipProvider>
         </div>
 
-        {/* PAGINATION - SERVER-SIDE */}
+        {/* PAGINATION */}
         <div className="flex flex-none items-center justify-between border-t border-neutral-100 bg-neutral-50/30 px-6 py-4">
           <div className="text-xs font-medium text-neutral-500">
             {searchTerm ? (
               <>Showing <span className="font-bold text-neutral-900">{filteredJobs.length}</span> results in current page</>
             ) : (
-              <>
-                Page <span className="font-bold text-neutral-900">{serverMeta.currentPage}</span> of{' '}
-                <span className="font-bold text-neutral-900">{serverMeta.totalPages}</span>
-                {' '}• Total:  <span className="font-bold text-neutral-900">{serverMeta.totalJobs}</span> ads
-              </>
+              <>Page <span className="font-bold text-neutral-900">{serverMeta.currentPage}</span> of <span className="font-bold text-neutral-900">{serverMeta.totalPages}</span> • Total: <span className="font-bold text-neutral-900">{serverMeta.totalJobs}</span> ads</>
             )}
           </div>
 
           {!searchTerm && serverMeta.totalPages > 1 && (
             <div className="flex items-center gap-2">
+              {/* UPDATED: Dùng variant 'icon-ghost' cho nút điều hướng */}
               <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-sm bg-white hover:bg-neutral-100 disabled:opacity-40"
+                variant="icon-ghost"
+                size="icon-sm"
+                className="bg-white hover:bg-neutral-100 border border-transparent rounded-sm"
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
               >
@@ -483,12 +383,11 @@ export default function AdsListPage() {
                     {page === '...' ? (
                       <span className="px-2 text-neutral-400">...</span>
                     ) : (
+                      // UPDATED: Dùng variant 'pagination' và 'pagination-active'
                       <Button
-                        variant={currentPage === page ? 'default' : 'outline'}
-                        className={`h-8 w-8 rounded-sm text-xs font-bold ${currentPage === page
-                          ? 'border-neutral-900 bg-neutral-900 text-white hover:bg-black'
-                          : 'border-transparent bg-white text-neutral-600 hover:bg-neutral-100 hover:text-black'
-                          }`}
+                        variant={currentPage === page ? 'pagination-active' : 'pagination'}
+                        size="sm"
+                        className="h-8 w-8 rounded-sm p-0 text-xs font-bold"
                         onClick={() => goToPage(page)}
                       >
                         {page}
@@ -499,9 +398,9 @@ export default function AdsListPage() {
               </div>
 
               <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-sm bg-white hover:bg-neutral-100 disabled:opacity-40"
+                variant="icon-ghost"
+                size="icon-sm"
+                className="bg-white hover:bg-neutral-100 border border-transparent rounded-sm"
                 onClick={() => goToPage(currentPage + 1)}
                 disabled={currentPage === serverMeta.totalPages}
               >
@@ -515,17 +414,8 @@ export default function AdsListPage() {
       {/* MODALS */}
       {selectedAd && (
         <>
-          <PromoteAdModal
-            isOpen={isPromoteOpen}
-            onClose={() => setIsPromoteOpen(false)}
-            onConfirm={() => setIsPromoteOpen(false)}
-          />
-          <ConfirmDeletePost
-            isOpen={isDeleteOpen}
-            onClose={() => setIsDeleteOpen(false)}
-            onConfirm={() => setIsDeleteOpen(false)}
-            post={selectedAd}
-          />
+          <PromoteAdModal isOpen={isPromoteOpen} onClose={() => setIsPromoteOpen(false)} onConfirm={() => setIsPromoteOpen(false)} />
+          <ConfirmDeletePost isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} onConfirm={() => setIsDeleteOpen(false)} post={selectedAd} />
         </>
       )}
     </div>
@@ -536,10 +426,16 @@ export default function AdsListPage() {
 // SUB-COMPONENTS
 // ============================================
 
-const ActionIcon = ({ icon, tooltip, onClick, color = 'text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100' }) => (
+// UPDATED: ActionIcon sử dụng Button với variant
+const ActionIcon = ({ icon, tooltip, onClick, variant = 'icon-ghost' }) => (
   <Tooltip>
     <TooltipTrigger asChild>
-      <Button variant="ghost" size="icon" onClick={onClick} className={`h-8 w-8 rounded-sm transition-all ${color}`}>
+      <Button
+        variant={variant}
+        size="icon-sm"
+        onClick={onClick}
+        className="rounded-sm transition-all"
+      >
         <i className={`${icon} text-lg`}></i>
       </Button>
     </TooltipTrigger>

@@ -7,15 +7,21 @@ import { useState, useEffect, useCallback } from "react";
  * - sections: [{ id, label }]
  * - onValidationChange?: function(validationsMap) => void
  * - offset?: number (not used if using scroll-margin-top)
+ * - onCancel, onSaveDraft, onPublish, isLoading, publishEnabled: (Added for Action Buttons integration if needed here, or keep separate)
  */
 export default function ScrollSpyNavigation({
     sections = [],
     onValidationChange,
-    offset = 0,
+    onCancel,
+    onSaveDraft,
+    onPublish,
+    isLoading,
+    publishEnabled
 }) {
     const [activeId, setActiveId] = useState(sections[0]?.id || null);
     const [validations, setValidations] = useState({}); // { [id]: boolean }
 
+    // --- Validation Logic (Giữ nguyên) ---
     const validateSection = useCallback((id) => {
         const container = document.getElementById(id);
         if (!container) return false;
@@ -47,18 +53,13 @@ export default function ScrollSpyNavigation({
                 }
             }
         }
-
         return true;
     }, []);
 
     const validateAll = useCallback(() => {
         const next = {};
         sections.forEach((s) => {
-            try {
-                next[s.id] = validateSection(s.id);
-            } catch (e) {
-                next[s.id] = false;
-            }
+            try { next[s.id] = validateSection(s.id); } catch (e) { next[s.id] = false; }
         });
         setValidations((prev) => {
             const same = sections.every((s) => prev[s.id] === next[s.id]);
@@ -66,6 +67,7 @@ export default function ScrollSpyNavigation({
         });
     }, [sections, validateSection]);
 
+    // --- Effects (Giữ nguyên) ---
     useEffect(() => {
         if (typeof onValidationChange === "function") {
             onValidationChange(validations);
@@ -73,27 +75,16 @@ export default function ScrollSpyNavigation({
     }, [validations, onValidationChange]);
 
     useEffect(() => {
-        if (!sections || sections.length === 0) {
-            setActiveId(null);
-            setValidations({});
-            return;
-        }
-
+        if (!sections || sections.length === 0) { setActiveId(null); setValidations({}); return; }
         setActiveId((prev) => prev || sections[0]?.id || null);
 
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        setActiveId(entry.target.id);
-                    }
+                    if (entry.isIntersecting) setActiveId(entry.target.id);
                 });
             },
-            {
-                root: null,
-                rootMargin: "-10% 0px -50% 0px",
-                threshold: 0,
-            }
+            { root: null, rootMargin: "-10% 0px -50% 0px", threshold: 0 }
         );
 
         sections.forEach((section) => {
@@ -101,7 +92,6 @@ export default function ScrollSpyNavigation({
             if (el) observer.observe(el);
         });
 
-        // initial validate and listeners
         validateAll();
         const handler = () => validateAll();
         document.addEventListener("input", handler, true);
@@ -127,54 +117,50 @@ export default function ScrollSpyNavigation({
     if (!sections || sections.length === 0) return null;
 
     return (
-        <div className="flex flex-col h-full bg-white">
-            {/* Header */}
-            <div className="px-6 py-6 border-b border-gray-100">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                    On This Page
-                </h3>
+        <div className="flex flex-col gap-4 p-4"> {/* Container chính của Sidebar */}
+
+            {/* 1. NAVIGATION BOX (Card Style) */}
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                <div className="bg-gray-50/50 px-4 py-3 border-b border-gray-100">
+                    <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                        Quick Navigation
+                    </h3>
+                </div>
+
+                <nav className="p-2" aria-label="On this page">
+                    <ul className="space-y-0.5">
+                        {sections.map((section) => {
+                            const isActive = activeId === section.id;
+                            const isValid = !!validations[section.id];
+
+                            return (
+                                <li key={section.id}>
+                                    <button
+                                        onClick={(e) => { e.preventDefault(); scrollToSection(section.id); }}
+                                        className={`
+                                            w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-between group
+                                            ${isActive
+                                                ? 'bg-blue-50 text-blue-700'
+                                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                            }
+                                        `}
+                                        aria-current={isActive ? "true" : "false"}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            {/* Dot indicator for active state */}
+                                            <span className={`h-1.5 w-1.5 rounded-full transition-colors ${isActive ? 'bg-blue-600' : 'bg-gray-300 group-hover:bg-gray-400'}`}></span>
+                                            <span>{section.label}</span>
+                                        </div>
+
+                                        {/* Validation Icon (Check xanh) */}
+                                        <i className={`text-base transition-colors ${isValid ? 'ri-checkbox-circle-fill text-green-500' : 'ri-checkbox-circle-line text-gray-300'}`} aria-hidden="true" />
+                                    </button>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </nav>
             </div>
-
-            {/* Navigation Links */}
-            <nav className="flex-1 overflow-y-auto px-4 py-6" aria-label="On this page">
-                <ul className="space-y-1">
-                    {sections.map((section) => {
-                        const isActive = activeId === section.id;
-                        const isValid = !!validations[section.id];
-
-                        return (
-                            <li key={section.id}>
-                                <button
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        scrollToSection(section.id);
-                                    }}
-                                    className={`
-                                        w-full text-left px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-between
-                                        ${isActive
-                                            ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-600 pl-2. 5'
-                                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-l-2 border-transparent pl-2.5'
-                                        }
-                                    `}
-                                    aria-current={isActive ? "true" : "false"}
-                                >
-                                    <span className={isActive ? 'font-semibold' : ''}>
-                                        {section.label}
-                                    </span>
-
-                                    {/* Validation Icon */}
-                                    {isValid && (
-                                        <i
-                                            className={`text-base ${isActive ? 'ri-checkbox-circle-fill text-blue-600' : 'ri-checkbox-circle-line text-gray-400'}`}
-                                            aria-hidden="true"
-                                        />
-                                    )}
-                                </button>
-                            </li>
-                        );
-                    })}
-                </ul>
-            </nav>
         </div>
     );
 }
