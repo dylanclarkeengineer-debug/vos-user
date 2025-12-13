@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/authContext'
+import Link from 'next/link'
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -106,12 +107,14 @@ export default function HomePage() {
               Post a new classified ad or job listing to reach the community.
             </p>
           </div>
-          <Button
-            variant="outline"
-            className="mt-auto w-full border-neutral-200 text-xs font-bold tracking-widest uppercase hover:bg-black hover:text-white"
-          >
-            Get Started
-          </Button>
+          <Link href="/ads/create">
+            <Button
+              variant="outline"
+              className="mt-auto w-full border-neutral-200 text-xs font-bold tracking-widest uppercase hover:bg-black hover:text-white"
+            >
+              Get Started
+            </Button>
+          </Link>
         </div>
 
         {/* Card 2: Create Business */}

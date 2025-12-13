@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { PhoneInput } from '@/components/ui/phone-input'
+import { Badge } from '@/components/ui/badge'
 
 import 'remixicon/fonts/remixicon.css'
 
@@ -628,82 +629,99 @@ export default function AdsCreateForm({ type, adsProps }) {
                             <h2 className="mb-6 text-xl font-bold text-gray-900">General Settings</h2>
                             <div className={ADS_STYLES.GRID_LAYOUT}>
                                 <div className="space-y-2">
-                                    <Label className={ADS_STYLES.LABEL}>Status <span className="text-red-500">*</span></Label>
+                                    <Label variant="normal_text">Status<span className="text-red-500">*</span></Label>
                                     <Select
-                                        value={formData.label} // Giá trị này sẽ là 'active' hoặc 'private'
+                                        value={formData.label}
                                         onValueChange={(val) => handleInputChange('label', val)}
                                     >
                                         <SelectTrigger className="w-full border-gray-300 bg-white">
                                             <SelectValue placeholder="Select status" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {/* Value phải khớp với kết quả return của hàm normalizeLabel */}
                                             <SelectItem value="active">Public</SelectItem>
                                             <SelectItem value="private">Private</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
+
+                                {/* Trường 2: Show Email */}
                                 <div className="space-y-2">
-                                    <Label className={ADS_STYLES.LABEL}>Show Email on Post?  </Label>
+                                    <Label variant="normal_text">Show Email on Post?</Label>
                                     <Select value={formData.showEmail} onValueChange={(val) => handleInputChange('showEmail', val)}>
                                         <SelectTrigger className="w-full border-gray-300 bg-white"><SelectValue /></SelectTrigger>
                                         <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
                                     </Select>
                                 </div>
+
+                                {/* Trường 3: Show Phone */}
                                 <div className="space-y-2">
-                                    <Label className={ADS_STYLES.LABEL}>Show Phone Number on Post? </Label>
+                                    {/* Đã loại bỏ className={ADS_STYLES.LABEL} */}
+                                    <Label variant="normal_text">Show Phone Number on Post?</Label>
                                     <Select value={formData.showPhone} onValueChange={(val) => handleInputChange('showPhone', val)}>
                                         <SelectTrigger className="w-full border-gray-300 bg-white"><SelectValue /></SelectTrigger>
                                         <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
                                     </Select>
                                 </div>
+
                             </div>
                         </div>
 
                         {/* BASIC INFO */}
                         <div id="basic-info" className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm scroll-mt-24">
+                            {/* Section Header */}
                             <div className="mb-6 border-b border-gray-100 pb-4">
-                                <h2 className="text-xl font-bold text-gray-900">Basic Information</h2>
-                                <p className="text-sm text-gray-500">Provide the main details about your listing. </p>
+                                <Label variant="primary">Basic Information</Label>
+                                <Label variant="normal_text" className="mt-1">
+                                    Provide the main details about your listing.
+                                </Label>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-6 md: grid-cols-2">
+                                {/* Title */}
                                 <div className="space-y-2">
-                                    <Label className={ADS_STYLES.LABEL}>Title <span className="text-red-500">*</span></Label>
+                                    <Label variant="form">
+                                        Title <span className="text-red-500">*</span>
+                                    </Label>
                                     <Input
+                                        mode="edit"
                                         placeholder="Enter a descriptive title"
-                                        className={ADS_STYLES.INPUT_BASE}
+                                        className="w-full"
                                         value={formData.title}
                                         onChange={(e) => handleInputChange('title', e.target.value)}
                                         required
                                     />
-                                    <p className="text-[10px] text-gray-400">Min 10 characters</p>
+                                    <Label variant="normal_text">Min 10 characters</Label>
                                 </div>
 
+                                {/* Category */}
                                 <div className="space-y-2">
-                                    <Label className={ADS_STYLES.LABEL}>Category <span className="text-red-500">*</span></Label>
+                                    <Label variant="form">
+                                        Category <span className="text-red-500">*</span>
+                                    </Label>
                                     <Select
+                                        value={selectedCategory}
                                         onValueChange={(val) => {
                                             setSelectedCategory(val);
                                             handleInputChange('position', '');
                                         }}
-                                        value={selectedCategory}
                                     >
-                                        <SelectTrigger className={`h-auto w-full py-2.5 ${ADS_STYLES.INPUT_BASE}`}>
+                                        <SelectTrigger className="w-full h-auto py-2.5">
                                             <SelectValue placeholder="Select a category" />
                                         </SelectTrigger>
 
-                                        <SelectContent className="max-h-[300px] ! px-4 ! py-3">
+                                        <SelectContent className="max-h-[300px]">
                                             {categories.map((cat) => (
                                                 <SelectItem
                                                     key={cat.id}
                                                     value={cat.queryValue || cat.name}
-                                                    className="h-auto ! py-3 !px-3 items-start cursor-pointer first:pt-4 last:pb-4"
+                                                    className="h-auto py-3 cursor-pointer"
                                                 >
-                                                    <div className="flex flex-col text-left w-full whitespace-normal gap-0.5">
-                                                        <span className="font-bold text-sm text-gray-900 leading-tight">{cat.name}</span>
+                                                    <div className="flex flex-col text-left w-full gap-0.5">
+                                                        <span className="font-bold text-sm text-gray-900">
+                                                            {cat.name}
+                                                        </span>
                                                         {cat.engName && (
-                                                            <span className="text-xs font-medium text-gray-500 mt-0.5 leading-tight opacity-80">
+                                                            <span className="text-xs text-gray-500 opacity-80">
                                                                 {cat.engName}
                                                             </span>
                                                         )}
@@ -716,32 +734,36 @@ export default function AdsCreateForm({ type, adsProps }) {
 
                                 {/* Position / Sub-Title */}
                                 <div className="space-y-2">
-                                    <Label className={ADS_STYLES.LABEL}>Position / Sub-Title</Label>
+                                    <Label variant="form">Position / Sub-Title</Label>
                                     <Input
+                                        mode="edit"
                                         placeholder="Enter or select position"
-                                        className={ADS_STYLES.INPUT_BASE + " mb-2"}
+                                        className="w-full"
                                         value={formData.position}
                                         onChange={(e) => handleInputChange('position', e.target.value)}
-                                        required={false}
                                     />
-                                    {currentCategoryObj && currentCategoryObj.positions_suggestion && (
-                                        <div className="flex flex-wrap gap-2">
+                                    {currentCategoryObj?.positions_suggestion && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
                                             {currentCategoryObj.positions_suggestion.map((pos, idx) => {
                                                 const label = typeof pos === 'object' ? pos.vi : pos;
-                                                const isSelected = formData.position.split(',').map(s => s.trim()).includes(label);
+                                                const isSelected = formData.position
+                                                    .split(',')
+                                                    .map(s => s.trim())
+                                                    .includes(label);
+
                                                 return (
                                                     <span
                                                         key={idx}
                                                         onClick={() => handlePositionSelect(pos)}
-                                                        className={`cursor-pointer rounded-full px-3 py-1 text-xs font-medium transition-colors border
-                  ${isSelected
-                                                                ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
-                                                                : 'bg-gray-100 text-gray-600 border-transparent hover:bg-blue-100 hover:text-blue-700'
+                                                        className={`cursor-pointer rounded-full px-3 py-1 text-xs font-medium transition-colors border ${isSelected
+                                                            ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                                                            : 'bg-gray-100 text-gray-600 border-transparent hover:bg-blue-100 hover:text-blue-700'
                                                             }`}
                                                     >
-                                                        {label} {isSelected && <i className="ri-check-line ml-1"></i>}
+                                                        {label}
+                                                        {isSelected && <i className="ri-check-line ml-1"></i>}
                                                     </span>
-                                                )
+                                                );
                                             })}
                                         </div>
                                     )}
@@ -749,10 +771,11 @@ export default function AdsCreateForm({ type, adsProps }) {
 
                                 {/* Author Name */}
                                 <div className="space-y-2">
-                                    <Label className={ADS_STYLES.LABEL}>Author Name</Label>
+                                    <Label variant="form">Author Name</Label>
                                     <Input
+                                        mode="edit"
                                         placeholder="Your name"
-                                        className={ADS_STYLES.INPUT_BASE}
+                                        className="w-full"
                                         value={formData.authorName}
                                         onChange={(e) => handleInputChange('authorName', e.target.value)}
                                     />
@@ -760,33 +783,34 @@ export default function AdsCreateForm({ type, adsProps }) {
 
                                 {/* Description - Full width */}
                                 <div className="col-span-1 space-y-2 md:col-span-2">
-                                    <Label className={ADS_STYLES.LABEL}>Description <span className="text-red-500">*</span></Label>
+                                    <Label variant="form">
+                                        Description <span className="text-red-500">*</span>
+                                    </Label>
                                     <Textarea
                                         placeholder="Provide detailed information about your post..."
-                                        className={ADS_STYLES.TEXTAREA_BASE}
+                                        className="min-h-[120px] w-full"
                                         value={formData.description}
                                         onChange={(e) => handleInputChange('description', e.target.value)}
                                         required
                                     />
                                     <div className="flex justify-end">
-                                        <span className="text-[10px] text-gray-400">Min 30 characters</span>
+                                        <Label variant="normal_text">Min 30 characters</Label>
                                     </div>
                                 </div>
 
-                                {/* SALARY INFORMATION - Full Width, No Border */}
-                                <div id="salary-info" className="col-span-1 md:col-span-2 space-y-4 pt-2">
-
-                                    {/* Header: Title only, no border bottom */}
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                {/* SALARY INFORMATION */}
+                                <div id="salary-info" className="col-span-1 md:col-span-2 space-y-4 pt-4">
+                                    {/* Header */}
+                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                                         <div>
-                                            <Label className="text-base font-bold text-gray-900 block mb-1">
-                                                Salary Information
+                                            <Label variant="secondary">Salary Information</Label>
+                                            <Label variant="normal_text" className="mt-1">
+                                                Optional - Auto-detected based on input
                                             </Label>
-                                            <p className="text-xs text-gray-500">Optional - Auto-detected based on input.</p>
                                         </div>
 
                                         {/* Negotiable Checkbox */}
-                                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                                        <label className="flex items-center gap-2 cursor-pointer shrink-0">
                                             <input
                                                 type="checkbox"
                                                 checked={salaryData.negotiable}
@@ -794,56 +818,57 @@ export default function AdsCreateForm({ type, adsProps }) {
                                                     ...prev,
                                                     negotiable: e.target.checked
                                                 }))}
-                                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                                                className="w-4 h-4 rounded border-gray-300"
                                             />
                                             <span className="text-sm font-medium text-gray-700">Negotiable</span>
                                         </label>
                                     </div>
 
-                                    {/* Inputs Grid - Full Width */}
+                                    {/* Salary Inputs Grid */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                                        {/* Left Column: Range Inputs */}
-                                        <div className="flex items-end gap-3 w-full">
-                                            <div className="flex-1 space-y-1.5">
-                                                <Label className="text-xs font-bold text-gray-700">Min</Label>
+                                        {/* Left:  Min/Max Range */}
+                                        <div className="flex items-end gap-3">
+                                            <div className="flex-1 space-y-2">
+                                                <Label variant="title">Min</Label>
                                                 <Input
+                                                    mode="edit"
                                                     type="number"
                                                     placeholder="From"
+                                                    className="w-full"
                                                     value={salaryData.min}
                                                     onChange={(e) => handleSalaryChange('min', e.target.value)}
                                                     disabled={salaryData.negotiable}
                                                     min="0"
-                                                    className="h-10 bg-white border-gray-300 focus-visible:ring-blue-600 disabled:bg-gray-50 disabled:text-gray-400 w-full"
                                                 />
                                             </div>
 
-                                            <span className="text-gray-400 font-bold mb-2 text-lg">—</span>
+                                            <span className="text-gray-400 font-bold mb-2">—</span>
 
-                                            <div className="flex-1 space-y-1.5">
-                                                <Label className="text-xs font-bold text-gray-700">Max</Label>
+                                            <div className="flex-1 space-y-2">
+                                                <Label variant="title">Max</Label>
                                                 <Input
+                                                    mode="edit"
                                                     type="number"
                                                     placeholder="To"
+                                                    className="w-full"
                                                     value={salaryData.max}
                                                     onChange={(e) => handleSalaryChange('max', e.target.value)}
                                                     disabled={salaryData.negotiable}
                                                     min="0"
-                                                    className="h-10 bg-white border-gray-300 focus-visible:ring-blue-600 disabled:bg-gray-50 disabled:text-gray-400 w-full"
                                                 />
                                             </div>
                                         </div>
 
-                                        {/* Right Column: Selectors */}
-                                        <div className="flex items-end gap-3 w-full">
-                                            <div className="w-1/3 space-y-1.5">
-                                                <Label className="text-xs font-bold text-gray-700">Currency</Label>
+                                        {/* Right: Currency & Period */}
+                                        <div className="flex items-end gap-3">
+                                            <div className="w-1/3 space-y-2">
+                                                <Label variant="title">Currency</Label>
                                                 <Select
                                                     value={salaryData.currency}
                                                     onValueChange={(val) => handleSalaryChange('currency', val)}
                                                     disabled={salaryData.negotiable}
                                                 >
-                                                    <SelectTrigger className="h-10 bg-white border-gray-300 disabled:bg-gray-50 w-full">
+                                                    <SelectTrigger className="w-full">
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -855,14 +880,14 @@ export default function AdsCreateForm({ type, adsProps }) {
                                                 </Select>
                                             </div>
 
-                                            <div className="w-2/3 space-y-1.5">
-                                                <Label className="text-xs font-bold text-gray-700">Period</Label>
+                                            <div className="w-2/3 space-y-2">
+                                                <Label variant="title">Period</Label>
                                                 <Select
                                                     value={salaryData.unit}
                                                     onValueChange={(val) => handleSalaryChange('unit', val)}
                                                     disabled={salaryData.negotiable}
                                                 >
-                                                    <SelectTrigger className="h-10 bg-white border-gray-300 disabled:bg-gray-50 w-full">
+                                                    <SelectTrigger className="w-full">
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -877,27 +902,27 @@ export default function AdsCreateForm({ type, adsProps }) {
                                         </div>
                                     </div>
 
-                                    {/* Preview - Minimal text only */}
+                                    {/* Salary Preview */}
                                     {!salaryData.negotiable && (
-                                        <div className="text-xs text-gray-500 font-medium flex items-center gap-1.5 mt-1">
+                                        <div className="flex items-center gap-2 text-sm">
                                             <i className="ri-eye-line text-gray-400"></i>
-                                            <span>Preview:</span>
-                                            <span className="text-gray-900 font-bold">
+                                            <Label variant="normal_text">Preview:</Label>
+                                            <span className="font-bold text-gray-900">
                                                 {generateSalaryText(salaryData) || 'Not specified'}
                                             </span>
-                                            <span className="text-[10px] uppercase text-gray-400 ml-1 border border-gray-200 px-1.5 rounded bg-gray-50">
+                                            <span className="text-[10px] uppercase text-gray-400 border border-gray-200 px-1.5 py-0.5 rounded bg-gray-50">
                                                 {salaryData.type}
                                             </span>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Applicant Requirements - Full width */}
+                                {/* Applicant Requirements */}
                                 <div className="col-span-1 space-y-2 md:col-span-2">
-                                    <Label className={ADS_STYLES.LABEL}>Applicant Requirements</Label>
+                                    <Label variant="form">Applicant Requirements</Label>
                                     <Textarea
                                         placeholder="List requirements for applicants..."
-                                        className={`${ADS_STYLES.TEXTAREA_BASE} min-h-[100px]`}
+                                        className="min-h-[100px] w-full"
                                         value={formData.applicantReq}
                                         onChange={(e) => handleInputChange('applicantReq', e.target.value)}
                                     />
@@ -908,42 +933,114 @@ export default function AdsCreateForm({ type, adsProps }) {
                         {/* PART 2: SALES INFO (OPTIONAL - BUSINESS ONLY) */}
                         {selectedCategory === 'Business' && (
                             <div id="sales-info" className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm animate-fade-in scroll-mt-24">
+                                {/* Section Header */}
                                 <div className="mb-6 border-b border-gray-100 pb-4">
-                                    <h2 className="text-xl font-bold text-gray-900">Sales Information</h2>
-                                    <p className="text-sm text-gray-500">Define the transfer price, deposit amount, and payment conditions. </p>
+                                    <Label variant="primary">Sales Information</Label>
+                                    <Label variant="normal_text" className="mt-1">
+                                        Define the transfer price, deposit amount, and payment conditions.
+                                    </Label>
                                 </div>
+
                                 <div className="grid grid-cols-1 gap-6 md: grid-cols-2">
+                                    {/* Asking Price */}
                                     <div className="space-y-2">
-                                        <Label className={ADS_STYLES.LABEL}>Asking Price ($)</Label>
-                                        <Input type="number" placeholder="50000" className={ADS_STYLES.INPUT_BASE} value={formData.bizSalePrice} onChange={(e) => handleInputChange('bizSalePrice', e.target.value)} />
+                                        <Label variant="form">Asking Price ($)</Label>
+                                        <Input
+                                            mode="edit"
+                                            type="number"
+                                            placeholder="50000"
+                                            className="w-full"
+                                            value={formData.bizSalePrice}
+                                            onChange={(e) => handleInputChange('bizSalePrice', e.target.value)}
+                                        />
                                     </div>
+
+                                    {/* Gross Revenue */}
                                     <div className="space-y-2">
-                                        <Label className={ADS_STYLES.LABEL}>Gross Revenue ($)</Label>
-                                        <Input type="number" placeholder="Annual Revenue" className={ADS_STYLES.INPUT_BASE} value={formData.bizGrossRevenue} onChange={(e) => handleInputChange('bizGrossRevenue', e.target.value)} />
+                                        <Label variant="form">Gross Revenue ($)</Label>
+                                        <Input
+                                            mode="edit"
+                                            type="number"
+                                            placeholder="Annual Revenue"
+                                            className="w-full"
+                                            value={formData.bizGrossRevenue}
+                                            onChange={(e) => handleInputChange('bizGrossRevenue', e.target.value)}
+                                        />
                                     </div>
+
+                                    {/* Cash Flow */}
                                     <div className="space-y-2">
-                                        <Label className={ADS_STYLES.LABEL}>Cash Flow ($)</Label>
-                                        <Input type="text" placeholder="Annual Cash Flow" className={ADS_STYLES.INPUT_BASE} value={formData.bizCashFlow} onChange={(e) => handleInputChange('bizCashFlow', e.target.value)} />
+                                        <Label variant="form">Cash Flow ($)</Label>
+                                        <Input
+                                            mode="edit"
+                                            type="text"
+                                            placeholder="Annual Cash Flow"
+                                            className="w-full"
+                                            value={formData.bizCashFlow}
+                                            onChange={(e) => handleInputChange('bizCashFlow', e.target.value)}
+                                        />
                                     </div>
+
+                                    {/* Monthly Rent */}
                                     <div className="space-y-2">
-                                        <Label className={ADS_STYLES.LABEL}>Monthly Rent</Label>
-                                        <Input type="number" placeholder="2000" className={ADS_STYLES.INPUT_BASE} value={formData.bizLeasePrice} onChange={(e) => handleInputChange('bizLeasePrice', e.target.value)} />
+                                        <Label variant="form">Monthly Rent ($)</Label>
+                                        <Input
+                                            mode="edit"
+                                            type="number"
+                                            placeholder="2000"
+                                            className="w-full"
+                                            value={formData.bizLeasePrice}
+                                            onChange={(e) => handleInputChange('bizLeasePrice', e.target.value)}
+                                        />
                                     </div>
+
+                                    {/* Employees */}
                                     <div className="space-y-2">
-                                        <Label className={ADS_STYLES.LABEL}>Employees</Label>
-                                        <Input type="number" placeholder="Number of employees" className={ADS_STYLES.INPUT_BASE} value={formData.bizEmployees} onChange={(e) => handleInputChange('bizEmployees', e.target.value)} />
+                                        <Label variant="form">Number of Employees</Label>
+                                        <Input
+                                            mode="edit"
+                                            type="number"
+                                            placeholder="e.g.  5"
+                                            className="w-full"
+                                            value={formData.bizEmployees}
+                                            onChange={(e) => handleInputChange('bizEmployees', e.target.value)}
+                                        />
                                     </div>
+
+                                    {/* Square Feet */}
                                     <div className="space-y-2">
-                                        <Label className={ADS_STYLES.LABEL}>Square Feet</Label>
-                                        <Input type="number" placeholder="e.g.  2000" className={ADS_STYLES.INPUT_BASE} value={formData.bizSquareFeet} onChange={(e) => handleInputChange('bizSquareFeet', e.target.value)} />
+                                        <Label variant="form">Square Feet</Label>
+                                        <Input
+                                            mode="edit"
+                                            type="number"
+                                            placeholder="e. g. 2000"
+                                            className="w-full"
+                                            value={formData.bizSquareFeet}
+                                            onChange={(e) => handleInputChange('bizSquareFeet', e.target.value)}
+                                        />
                                     </div>
+
+                                    {/* Lease Expiration */}
                                     <div className="space-y-2">
-                                        <Label className={ADS_STYLES.LABEL}>Lease Expiration</Label>
-                                        <Input type="date" className={ADS_STYLES.INPUT_BASE} value={formData.bizLeaseExpiration} onChange={(e) => handleInputChange('bizLeaseExpiration', e.target.value)} />
+                                        <Label variant="form">Lease Expiration</Label>
+                                        <Input
+                                            mode="edit"
+                                            type="date"
+                                            className="w-full"
+                                            value={formData.bizLeaseExpiration}
+                                            onChange={(e) => handleInputChange('bizLeaseExpiration', e.target.value)}
+                                        />
                                     </div>
+
+                                    {/* Reason for Selling - Full width */}
                                     <div className="col-span-1 space-y-2 md:col-span-2">
-                                        <Label className={ADS_STYLES.LABEL}>Reason for Selling</Label>
-                                        <Textarea placeholder="Explain why you're selling..." className={ADS_STYLES.TEXTAREA_BASE} value={formData.bizReason} onChange={(e) => handleInputChange('bizReason', e.target.value)} />
+                                        <Label variant="form">Reason for Selling</Label>
+                                        <Textarea
+                                            placeholder="Explain why you're selling..."
+                                            className="min-h-[100px] w-full"
+                                            value={formData.bizReason}
+                                            onChange={(e) => handleInputChange('bizReason', e.target.value)}
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -967,25 +1064,54 @@ export default function AdsCreateForm({ type, adsProps }) {
 
                         {/* LOCATION & CONTACT */}
                         <div id="location-contact" className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm scroll-mt-24">
-                            <h2 className="mb-6 text-xl font-bold text-gray-900">Location & Contact</h2>
-                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            {/* Section Header */}
+                            <div className="mb-6 border-b border-gray-100 pb-4">
+                                <Label variant="primary">Location & Contact</Label>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-6 md: grid-cols-2">
+                                {/* Show Location */}
                                 <div className="space-y-2">
-                                    <Label className={ADS_STYLES.LABEL}>Show Location? </Label>
-                                    <Select value={formData.showLocation} onValueChange={(val) => handleInputChange('showLocation', val)}>
-                                        <SelectTrigger className={ADS_STYLES.SELECT_TRIGGER}><SelectValue /></SelectTrigger>
-                                        <SelectContent><SelectItem value="yes">Yes</SelectItem><SelectItem value="no">No</SelectItem></SelectContent>
+                                    <Label variant="form">Show Location? </Label>
+                                    <Select
+                                        value={formData.showLocation}
+                                        onValueChange={(val) => handleInputChange('showLocation', val)}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="yes">Yes</SelectItem>
+                                            <SelectItem value="no">No</SelectItem>
+                                        </SelectContent>
                                     </Select>
                                 </div>
+
+                                {/* Contact Email */}
                                 <div className="space-y-2">
-                                    <Label className={ADS_STYLES.LABEL}>Contact Email <span className="text-red-500">*</span></Label>
-                                    <Input type="email" placeholder="your@email.com" className={ADS_STYLES.INPUT_BASE} value={formData.contactEmail} onChange={(e) => handleInputChange('contactEmail', e.target.value)} required />
+                                    <Label variant="form">
+                                        Contact Email <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                        mode="edit"
+                                        type="email"
+                                        placeholder="your@email.com"
+                                        className="w-full"
+                                        value={formData.contactEmail}
+                                        onChange={(e) => handleInputChange('contactEmail', e.target.value)}
+                                        required
+                                    />
                                 </div>
+
+                                {/* Contact Phone */}
                                 <div className="space-y-2">
-                                    <Label className={ADS_STYLES.LABEL}>Contact Phone <span className="text-red-500">*</span></Label>
+                                    <Label variant="form">
+                                        Contact Phone <span className="text-red-500">*</span>
+                                    </Label>
                                     <PhoneInput
                                         defaultCountry="US"
                                         placeholder="(555) 123-4567"
-                                        className={ADS_STYLES.INPUT_BASE}
+                                        className="w-full"
                                         value={formData.contactPhone}
                                         onChange={(value) => {
                                             if (value && value.length > 12) return;
@@ -994,12 +1120,14 @@ export default function AdsCreateForm({ type, adsProps }) {
                                         required
                                     />
                                 </div>
+
+                                {/* Secondary Phone */}
                                 <div className="space-y-2">
-                                    <Label className={ADS_STYLES.LABEL}>Secondary Phone (Optional)</Label>
+                                    <Label variant="form">Secondary Phone (Optional)</Label>
                                     <PhoneInput
                                         defaultCountry="US"
                                         placeholder="(555) 987-6543"
-                                        className={ADS_STYLES.INPUT_BASE}
+                                        className="w-full"
                                         value={formData.secondaryPhone}
                                         onChange={(value) => {
                                             if (value && value.length > 12) return;
@@ -1007,6 +1135,8 @@ export default function AdsCreateForm({ type, adsProps }) {
                                         }}
                                     />
                                 </div>
+
+                                {/* Location Autocomplete */}
                                 <div className="space-y-2">
                                     <LocationAutoComplete
                                         selectedState={formData.state}
@@ -1015,75 +1145,109 @@ export default function AdsCreateForm({ type, adsProps }) {
                                         onLocationSelect={handleLocationSelect}
                                     />
                                 </div>
+
+                                {/* Zip Code */}
                                 <div className="space-y-2">
-                                    <Label className={ADS_STYLES.LABEL}>Zip Code</Label>
-                                    <Input placeholder="90210" className={ADS_STYLES.INPUT_BASE} value={formData.zipcode} onChange={(e) => handleInputChange('zipcode', e.target.value)} />
+                                    <Label variant="form">Zip Code</Label>
+                                    <Input
+                                        mode="edit"
+                                        placeholder="90210"
+                                        className="w-full"
+                                        value={formData.zipcode}
+                                        onChange={(e) => handleInputChange('zipcode', e.target.value)}
+                                    />
                                 </div>
-                                <div className='space-y-2'>
-                                    <Label className={ADS_STYLES.LABEL}>Website</Label>
-                                    <Input placeholder="https://yourwebsite.com" className={ADS_STYLES.INPUT_BASE} value={formData.website} onChange={(e) => handleInputChange('website', e.target.value)} />
+
+                                {/* Website */}
+                                <div className="space-y-2">
+                                    <Label variant="form">Website</Label>
+                                    <Input
+                                        mode="edit"
+                                        type="url"
+                                        placeholder="https://yourwebsite.com"
+                                        className="w-full"
+                                        value={formData.website}
+                                        onChange={(e) => handleInputChange('website', e.target.value)}
+                                    />
                                 </div>
                             </div>
 
+                            {/* Social Media Links Section */}
                             <div className="mt-6 border-t border-gray-100 pt-6">
+                                {/* Social Links Header */}
                                 <div className="mb-4 flex flex-row items-center justify-between">
-                                    <Label className={ADS_STYLES.LABEL}>Social Media Links</Label>
+                                    <Label variant="secondary">Social Media Links</Label>
                                     <Button
-                                        onClick={addSocialLink}
                                         variant="outline"
                                         size="sm"
-                                        className="h-8 text-xs"
+                                        onClick={addSocialLink}
                                         disabled={socialLinks.length >= Object.keys(PLATFORM_DOMAINS).length}
                                     >
-                                        {socialLinks.length >= Object.keys(PLATFORM_DOMAINS).length ? 'All added' : '+ Add Link'}
+                                        <i className="ri-add-line mr-1"></i>
+                                        {socialLinks.length >= Object.keys(PLATFORM_DOMAINS).length ? 'All Added' : 'Add Link'}
                                     </Button>
                                 </div>
 
+                                {/* Empty State */}
                                 {socialLinks.length === 0 && (
-                                    <p className="text-xs text-gray-400 italic mb-2">
+                                    <Label variant="normal_text" className="italic block mb-2">
                                         No social links added yet (Facebook, Instagram, etc.).
-                                    </p>
+                                    </Label>
                                 )}
 
+                                {/* Social Links List */}
                                 {socialLinks.map((item, idx) => (
                                     <div key={idx} className="flex flex-col gap-1 mb-3">
                                         <div className="flex gap-2">
+                                            {/* Platform Selector */}
                                             <Select
                                                 value={item.platform}
                                                 onValueChange={(v) => updateSocialLink(idx, 'platform', v)}
                                             >
-                                                <SelectTrigger className="w-[130px] bg-white border-gray-300">
+                                                <SelectTrigger className="w-[130px]">
                                                     <SelectValue placeholder="Platform" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {Object.keys(PLATFORM_DOMAINS)
                                                         .filter(p => {
-                                                            const isSelectedByOthers = socialLinks.some((link, linkIdx) => linkIdx !== idx && link.platform === p);
+                                                            const isSelectedByOthers = socialLinks.some(
+                                                                (link, linkIdx) => linkIdx !== idx && link.platform === p
+                                                            );
                                                             return !isSelectedByOthers;
                                                         })
                                                         .map(p => (
-                                                            <SelectItem key={p} value={p}>{p}</SelectItem>
+                                                            <SelectItem key={p} value={p}>
+                                                                {p}
+                                                            </SelectItem>
                                                         ))
                                                     }
                                                 </SelectContent>
                                             </Select>
 
+                                            {/* URL Input */}
                                             <Input
+                                                mode="edit"
                                                 value={item.url}
                                                 onChange={(e) => updateSocialLink(idx, 'url', e.target.value)}
                                                 placeholder={`Paste ${item.platform || 'social'} link... `}
-                                                className={`flex-1 bg-white border-gray-300 ${item.error ? 'border-red-500 focus-visible:ring-red-200' : ''}`}
+                                                className={`flex-1 ${item.error ? 'border-red-500 focus-visible: ring-red-200' : ''}`}
                                             />
 
-                                            <Button variant="ghost" onClick={() => removeSocialLink(idx)} className="px-2">
+                                            {/* Remove Button */}
+                                            <Button
+                                                variant="icon-destructive"
+                                                size="icon-sm"
+                                                onClick={() => removeSocialLink(idx)}
+                                            >
                                                 <i className="ri-delete-bin-line"></i>
                                             </Button>
                                         </div>
 
+                                        {/* Error Message */}
                                         {item.error && (
-                                            <span className="text-[10px] text-red-500 ml-[138px] animate-in fade-in">
+                                            <Label variant="normal_text" className="text-red-500 ml-[138px] animate-in fade-in">
                                                 {item.error}
-                                            </span>
+                                            </Label>
                                         )}
                                     </div>
                                 ))}
@@ -1092,85 +1256,134 @@ export default function AdsCreateForm({ type, adsProps }) {
 
                         {/* RELATED BUSINESS */}
                         <div id="related-business" className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm scroll-mt-24">
-                            <h2 className="mb-6 text-xl font-bold text-gray-900">Related Business</h2>
+                            {/* Section Header */}
+                            <div className="mb-6 border-b border-gray-100 pb-4">
+                                <Label variant="primary">Related Business</Label>
+                            </div>
+
                             <div className="space-y-2">
-                                <Label className={ADS_STYLES.LABEL}>Link to Existing Business (Optional)</Label>
+                                <Label variant="form">Link to Existing Business (Optional)</Label>
                                 <Select
                                     value={formData.relatedBusiness || 'none'}
                                     onValueChange={(val) => handleInputChange('relatedBusiness', val)}
                                 >
-                                    <SelectTrigger className="border-gray-300 bg-white"><SelectValue placeholder="Select a business" /></SelectTrigger>
+                                    <SelectTrigger className="w-full">
+                                        <SelectValue placeholder="Select a business" />
+                                    </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="none">None</SelectItem>
                                         {MOCK_USER_BUSINESSES.map(biz => (
-                                            <SelectItem key={biz.id} value={biz.id}>{biz.name}</SelectItem>
+                                            <SelectItem key={biz.id} value={biz.id}>
+                                                {biz.name}
+                                            </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <p className="text-xs text-gray-500">Connect this post to one of your business profiles.</p>
+                                <Label variant="normal_text">
+                                    Connect this post to one of your business profiles.
+                                </Label>
                             </div>
                         </div>
 
                         {/* IMAGES */}
                         <div id="images" className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm scroll-mt-24">
-                            <h1 className="mb-4 text-xl font-bold text-gray-900">Images</h1>
-                            <h2 className="mb-4 text-xs font-bold text-gray-500 uppercase">Gallery Photos</h2>
+                            {/* Section Header */}
+                            <div className="mb-6 border-b border-gray-100 pb-4">
+                                <Label variant="primary">Images</Label>
+                                <Label variant="normal_text" className="mt-1 uppercase tracking-wider">
+                                    Gallery Photos
+                                </Label>
+                            </div>
+
+                            {/* Image Upload Grid */}
                             <div className="flex flex-wrap gap-4">
+                                {/* Add Image Button */}
                                 {images.length < 5 && (
-                                    <label className="group relative flex h-32 w-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed bg-white hover:bg-gray-50 transition-colors hover:border-gray-400">
+                                    <label className="group relative flex h-32 w-32 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 transition-colors">
                                         <div className="flex flex-col items-center gap-2">
-                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors group-hover:bg-gray-200 group-hover:text-gray-700"><i className="ri-add-line text-lg"></i></div>
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-600">Add</span>
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-700 transition-colors">
+                                                <i className="ri-add-line text-lg"></i>
+                                            </div>
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 group-hover:text-gray-600">
+                                                Add
+                                            </span>
                                         </div>
-                                        <input type="file" className="hidden" accept="image/*" multiple onChange={handleImageChange} />
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={handleImageChange}
+                                        />
                                     </label>
                                 )}
+
+                                {/* Image Preview Cards */}
                                 {images.map((img, i) => (
                                     <div
                                         key={i}
-                                        className={`relative h-32 w-32 rounded-lg border overflow-hidden group transition-all 
-                      ${img.isMain ? 'border-blue-500 ring-2 ring-blue-500 ring-offset-1' : 'border-gray-200'}`}
+                                        className={`relative h-32 w-32 rounded-lg border overflow-hidden group transition-all ${img.isMain
+                                            ? 'border-blue-500 ring-2 ring-blue-500 ring-offset-1'
+                                            : 'border-gray-200'
+                                            }`}
                                     >
-                                        <img src={img.preview} alt={`Preview ${i}`} className="h-full w-full object-cover" />
+                                        {/* Image */}
+                                        <img
+                                            src={img.preview}
+                                            alt={`Preview ${i + 1}`}
+                                            className="h-full w-full object-cover"
+                                        />
 
+                                        {/* Hover Overlay */}
                                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-
+                                            {/* Set Cover Button (if not main) */}
                                             {!img.isMain && (
                                                 <Button
-                                                    variant="brand-subtle"
+                                                    variant="outline"
+                                                    size="xs"
                                                     onClick={() => handleSetMainImage(i)}
-                                                    className="bg-white/20 px-2 py-1"
+                                                    className="bg-white/90 backdrop-blur-sm hover:bg-white"
                                                 >
                                                     Set Cover
                                                 </Button>
                                             )}
 
+                                            {/* Main Cover Badge (if main) */}
                                             {img.isMain && (
-                                                <span className="rounded-full bg-blue-600 px-2 py-1 text-[10px] font-bold text-white shadow-sm">
+                                                <Badge className="bg-blue-600 text-white border-none shadow-sm">
                                                     Main Cover
-                                                </span>
+                                                </Badge>
                                             )}
 
+                                            {/* Delete Button */}
                                             <Button
                                                 variant="icon-destructive"
+                                                size="icon-sm"
                                                 onClick={() => removeImage(i)}
-                                                className="h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center hover: bg-red-600 transition-colors"
+                                                className="rounded-full"
                                             >
-                                                <i className="ri-delete-bin-line text-xs"></i>
+                                                <i className="ri-delete-bin-line"></i>
                                             </Button>
                                         </div>
 
+                                        {/* Main Star Badge (top-left corner) */}
                                         {img.isMain && (
                                             <div className="absolute top-1 left-1 bg-blue-600 text-white rounded-full p-1 shadow-md z-10">
-                                                <i className="ri-star-fill text-xs block"></i>
+                                                <i className="ri-star-fill text-xs"></i>
                                             </div>
                                         )}
                                     </div>
                                 ))}
                             </div>
-                            <div className="mt-4 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                                <span>{images.length}/5 Photos Uploaded</span>
-                                <span>Max 25MB Total</span>
+
+                            {/* Image Counter Footer */}
+                            <div className="mt-4 flex items-center justify-between">
+                                <Label variant="normal_text" className="uppercase tracking-wider">
+                                    {images.length}/5 Photos Uploaded
+                                </Label>
+                                <Label variant="normal_text" className="uppercase tracking-wider">
+                                    Max 25MB Total
+                                </Label>
                             </div>
                         </div>
 

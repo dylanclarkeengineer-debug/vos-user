@@ -17,6 +17,12 @@ const badgeVariants = cva(
           'bg-destructive [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 border-transparent text-white',
         outline:
           'text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
+
+        // --- CÁC VARIANT MỚI ĐƯỢC THÊM VÀO ---
+        info: // Ví dụ: Dùng cho "Premium Member"
+          'bg-blue-50 text-blue-700 border-blue-100',
+        success: // Ví dụ: Dùng cho "Verified"
+          'border-green-200 text-green-700 bg-green-50',
       },
     },
     defaultVariants: {

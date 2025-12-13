@@ -9,13 +9,11 @@ export default function CreateAdsPage() {
   const searchParams = useSearchParams()
   const [mode, setMode] = useState('new')
 
-  // 1. Lấy Data từ Context
   const { editJob, copyJob } = useAdsContext()
 
   const editId = searchParams?.get?.('edit')
   const copyId = searchParams?.get?.('duplicate')
 
-  // 2. Logic chọn Data (Giống hệt lúc dùng Zustand)
   let jobData = null
 
   if (editId && editJob && String(editJob.id) === String(editId)) {
