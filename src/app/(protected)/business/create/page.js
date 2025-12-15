@@ -227,6 +227,19 @@ export default function BusinessCreatePage() {
     })
   }, [])
 
+  const slugify = (str = '') => {
+    return String(str || '')
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-_]/g, '')
+      .trim()
+      .replace(/[\s_]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80)
+  }
+
   const addSocialLink = useCallback(() => {
     const availablePlatforms = Object.keys(PLATFORM_DOMAINS).filter(
       p => !socialLinks.some(link => link.platform === p)
@@ -394,6 +407,8 @@ export default function BusinessCreatePage() {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault()
 
+    const finalSlug = slugify(formData.slug || formData.name || '')
+
     if (!userId) {
       setErrorMessage('Please log in to create a business')
       router.push('/signin')
@@ -429,7 +444,7 @@ export default function BusinessCreatePage() {
         params: {
           name: formData.name.trim(),
           logo: cleanBase64(formData.logo),
-          slug: formData.slug.trim() || "",
+          slug: finalSlug,
           category: formData.category,
           description: formData.description.trim(),
           business_status: formData.business_status,
@@ -468,28 +483,20 @@ export default function BusinessCreatePage() {
         return
       }
 
-      console.log('📤 Cleaned Payload:', JSON.stringify(payload, null, 2))
+      console.log('Cleaned Payload:', JSON.stringify(payload, null, 2))
 
       const result = await businessHandlers.createBusinessByUser(payload)
 
-      console.log('✅ Server Response:', result)
+      console.log('Server Response:', result)
 
       if (result.success) {
-        const businessId = result.businessId || result.business_id
-
         alert('Business created successfully!')
-
-        if (businessId) {
-          router.push(`/business/${businessId}`)
-        } else {
-          router.push('/business')
-        }
       } else {
         throw new Error(result.message || 'Failed to create business')
       }
 
     } catch (error) {
-      console.error('❌ Submit Error:', error)
+      console.error('Submit Error:', error)
 
       let msg = 'Failed to create business.  Please try again.'
 
