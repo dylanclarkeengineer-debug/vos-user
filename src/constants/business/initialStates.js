@@ -6,6 +6,7 @@ export const INITIAL_BUSINESS_STATE = {
     category: '',
     description: '',
     business_status: 'active', // active | inactive | pending
+    slug: "",
 
     // Logo & Branding
     logo: null, // Base64 string for upload

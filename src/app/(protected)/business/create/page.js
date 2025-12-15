@@ -383,6 +383,10 @@ export default function BusinessCreatePage() {
       newErrors.email = 'Invalid email format'
     }
 
+    if (formData.slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(formData.slug)) {
+      newErrors.slug = 'Slug can only contain lowercase letters, numbers and hyphens'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }, [formData])
@@ -424,7 +428,8 @@ export default function BusinessCreatePage() {
         logoFile: cleanBase64(formData.logo), // ✅ Clean spaces
         params: {
           name: formData.name.trim(),
-          logo: cleanBase64(formData.logo), // ✅ Clean spaces
+          logo: cleanBase64(formData.logo),
+          slug: formData.slug.trim() || "",
           category: formData.category,
           description: formData.description.trim(),
           business_status: formData.business_status,
@@ -612,6 +617,21 @@ export default function BusinessCreatePage() {
                     )}
                     <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label variant="form">Custom URL Slug</Label>
+                  <Input
+                    mode="edit"
+                    placeholder="your-business-name"
+                    className="w-full"
+                    value={formData.slug || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                  />
+                  <Label variant="normal_text" className="truncate">
+                    Preview: .../business/{(formData.slug && formData.slug.length > 0) ? formData.slug : 'your-business-name'}
+                  </Label>
+                  {errors.slug && <p className="text-xs text-red-600">{errors.slug}</p>}
                 </div>
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

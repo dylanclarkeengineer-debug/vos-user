@@ -41,18 +41,6 @@ const MENU_ITEMS = [
         href: '/ads/list',
         title: 'My Posted Ads',
       },
-      // {
-      //   label: 'Favorite Ads',
-      //   icon: 'ri-heart-line',
-      //   href: '/ads/favorites',
-      //   title: 'Favorite Ads',
-      // },
-      // {
-      //   label: 'Job Suggestions',
-      //   icon: 'ri-lightbulb-line',
-      //   href: '/ads/suggestions',
-      //   title: 'Job Suggestions',
-      // },
       {
         label: 'Applied Jobs',
         icon: 'ri-briefcase-line',
@@ -180,6 +168,15 @@ export default function DashboardLayout({ children }) {
     }
   }, [pathname])
 
+  // derive avatar fallback initial
+  const avatarInitial = useMemo(() => {
+    const name = user?.name || ''
+    return name ? name.charAt(0).toUpperCase() : 'U'
+  }, [user?.name])
+
+  // Use personal_profile_image from authContext.user when available
+  const avatarSrc = user?.personal_profile_image || null
+
   return (
     <div
       className={`fixed inset-0 flex h-screen w-full overflow-hidden bg-[#F8F8F8] font-sans text-neutral-900 selection:bg-neutral-900 selection:text-white ${inter.className}`}
@@ -188,10 +185,13 @@ export default function DashboardLayout({ children }) {
         <div className="shrink-0 p-8 pb-6">
           <div className="mb-6 flex items-center gap-4">
             <Avatar className="h-12 w-12 border border-neutral-200">
-              <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-              <AvatarFallback className="bg-neutral-900 font-bold text-white">
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-              </AvatarFallback>
+              {avatarSrc ? (
+                <AvatarImage src={avatarSrc} alt={user?.name || 'User avatar'} />
+              ) : (
+                <AvatarFallback className="bg-neutral-900 font-bold text-white">
+                  {avatarInitial}
+                </AvatarFallback>
+              )}
             </Avatar>
             <div className="overflow-hidden">
               <h3 className="truncate text-lg leading-tight font-bold text-neutral-900">
@@ -269,7 +269,6 @@ export default function DashboardLayout({ children }) {
                       value={section.id}
                       className="border-b-0"
                     >
-                      {/* SỬA ĐỔI TẠI ĐÂY: Thêm caption bên dưới label */}
                       <AccordionTrigger className="group h-auto min-h-[44px] rounded-sm px-3 py-3 transition-colors hover:bg-neutral-50 hover:no-underline data-[state=open]:bg-neutral-50">
                         <div className="flex items-center gap-3 text-left text-neutral-800">
                           <span

@@ -126,9 +126,85 @@ export const getBusinessCategories = async () => {
     }
 }
 
+/**
+ * Get businesses belonging to a user
+ * Example GET:
+ *  GET ${API_ROUTES.VGC_USERS_PREFIX}/getBusinessesByUser
+ *  params: { user_id, country }
+ *
+ * @param {string} userId - user id
+ * @param {string} country - country code (default 'us')
+ * @param {string|null} token - optional auth token (will use cookie if not provided)
+ * @returns {Promise<{ success: boolean, businesses: Array }>} normalized response
+ */
+export const getBusinessesByUser = async (userId, country = 'us', token = null) => {
+    try {
+        if (!userId) {
+            throw new Error('User ID is required to fetch businesses')
+        }
+
+        const authToken = token || Cookies.get('vos_token')
+
+        const headers = {
+            'Content-Type': 'application/json',
+        }
+
+        if (authToken) {
+            headers.Authorization = `Bearer ${authToken}`
+        }
+
+        const response = await axiosClient.get(
+            `${API_ROUTES.VGC_USERS_PREFIX}/getBusinessesByUser`,
+            {
+                params: { user_id: userId, country },
+                headers
+            }
+        )
+
+        // response.data expected like: { success: true, businesses: [...] }
+        const data = response.data || {}
+
+        return {
+            success: data.success === true,
+            businesses: Array.isArray(data.businesses) ? data.businesses : (data.data?.businesses || []),
+            raw: data
+        }
+    } catch (error) {
+        console.error('Error fetching businesses by user:', error)
+
+        if (error.response) {
+            console.error('Response Error Details:', {
+                status: error.response.status,
+                statusText: error.response.statusText,
+                data: error.response.data,
+                headers: error.response.headers,
+            })
+        } else if (error.request) {
+            console.error('No Response Received:', error.request)
+        } else {
+            console.error('Request Setup Error:', error.message)
+        }
+
+        if (error.response?.status === 401 && Cookies.get('vos_token')) {
+            Cookies.remove('vos_token')
+        }
+
+        const errorData = error.response?.data
+        const errorMessage = errorData?.message || error.message || 'Failed to fetch businesses'
+
+        throw {
+            message: errorMessage,
+            status: error.response?.status,
+            data: errorData,
+            originalError: error
+        }
+    }
+}
+
 const businessHandlers = {
     createBusinessByUser,
     getBusinessCategories,
+    getBusinessesByUser
 }
 
 export default businessHandlers
