@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Cookies from 'js-cookie'
@@ -35,8 +35,11 @@ import { SALARY_UNITS } from '@/constants/ads/salaryConstants'
 import { normalizeToHourly, generateSalaryText, buildSalaryPayload } from '@/utils/ads/salaryUtils'
 import PostSuccessModal from '@/components/ads/PostSuccessModal'
 
-/* NEW: use zustand store for passing edit/copy job data */
-import { useAdsStore } from '@/stores/adsStore' // adjust path if your store lives elsewhere
+// Use context instead of zustand
+import { useAdsContext } from '@/context/adsContext'
+
+// Import business handler to fetch user's businesses for the related-business field
+import businessHandlers from '@/utils/business/businessHandlers'
 
 export default function AdsCreateForm({ type, adsProps }) {
     const router = useRouter()
@@ -82,11 +85,15 @@ export default function AdsCreateForm({ type, adsProps }) {
     // Lấy category object hiện tại để suggest positions
     const currentCategoryObj = categories.find(c => (c.queryValue || c.name) === selectedCategory)
 
-    // Read zustand store values (set by the list page). Prefers store, then adsProps.
-    const storeEditJob = useAdsStore(state => state.editJob)
-    const storeCopyJob = useAdsStore(state => state.copyJob)
-    const clearEditJob = useAdsStore(state => state.clearEditJob)
-    const clearCopyJob = useAdsStore(state => state.clearCopyJob)
+    // Read from AdsContext (replaces zustand)
+    const { editJob: contextEditJob, copyJob: contextCopyJob, clearEditJob, clearCopyJob } = useAdsContext()
+
+    // Related business helpers
+    const [userBusinesses, setUserBusinesses] = useState([])
+    const [businesssLoading, setBusinesssLoading] = useState(false)
+    const [relatedQuery, setRelatedQuery] = useState('')
+    const [relatedSuggestionsVisible, setRelatedSuggestionsVisible] = useState(false)
+    const relatedRef = useRef(null)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -100,27 +107,54 @@ export default function AdsCreateForm({ type, adsProps }) {
         fetchData()
     }, [])
 
+    // Fetch user's businesses for "Related Business" dropdown/autocomplete
+    useEffect(() => {
+        let mounted = true
+        const fetchUserBusinesses = async () => {
+            if (!user?.user_id) return
+            try {
+                setBusinesssLoading(true)
+                const res = await businessHandlers.getBusinessesByUser(user.user_id, 'us')
+                if (!mounted) return
+                if (res && res.success) {
+                    setUserBusinesses(Array.isArray(res.businesses) ? res.businesses : [])
+                } else {
+                    // fallback to raw if present
+                    const fallback = res?.raw?.businesses || []
+                    setUserBusinesses(Array.isArray(fallback) ? fallback : [])
+                }
+            } catch (err) {
+                console.error('Failed to load user businesses', err)
+                setUserBusinesses([])
+            } finally {
+                if (mounted) setBusinesssLoading(false)
+            }
+        }
+
+        fetchUserBusinesses()
+        return () => { mounted = false }
+    }, [user?.user_id])
+
     /**
      * Prefill logic:
      * - Prefer props passed from page (adsProps) if present.
-     * - If not, prefer zustand store (storeEditJob / storeCopyJob) when type === 'edit'|'copy'.
-     * - If none provided, keep defaults (no sessionStorage usage anymore).
+     * - If not, prefer context (contextEditJob / contextCopyJob) when type === 'edit'|'copy'.
+     * - If none provided, keep defaults.
      */
     useEffect(() => {
-        // choose source: props first, then store if type matches
+        // choose source: props first, then context if type matches
         let job = null
 
         if (adsProps && typeof adsProps === 'object') {
             job = adsProps
-        } else if (type === 'edit' && storeEditJob && typeof storeEditJob === 'object') {
-            // make sure the store job corresponds to current edit id if present
+        } else if (type === 'edit' && contextEditJob && typeof contextEditJob === 'object') {
             const editId = searchParams?.get?.('edit')
-            if (!editId || String(storeEditJob.id) === String(editId)) {
-                job = storeEditJob
+            if (!editId || String(contextEditJob.id) === String(editId)) {
+                job = contextEditJob
                 try { clearEditJob() } catch (e) { /* ignore */ }
             }
-        } else if (type === 'copy' && storeCopyJob && typeof storeCopyJob === 'object') {
-            job = storeCopyJob
+        } else if (type === 'copy' && contextCopyJob && typeof contextCopyJob === 'object') {
+            job = contextCopyJob
             try { clearCopyJob() } catch (e) { /* ignore */ }
         }
 
@@ -212,7 +246,7 @@ export default function AdsCreateForm({ type, adsProps }) {
         // editing id
         if (job.id) setEditingJobId(job.id)
 
-    }, [adsProps, storeEditJob, storeCopyJob, type, searchParams, clearEditJob, clearCopyJob])
+    }, [adsProps, contextEditJob, contextCopyJob, type, searchParams, clearEditJob, clearCopyJob])
 
     // 🔥 AUTO-DETECT SALARY TYPE based on min/max values
     useEffect(() => {
@@ -581,6 +615,49 @@ export default function AdsCreateForm({ type, adsProps }) {
     const onSaveDraft = () => handleSubmit(null, 'deactive');
     const onPublish = () => handleSubmit(null, 'active');
 
+    // --- Related Business: suggestions derived from userBusinesses and relatedQuery
+    const filteredRelatedSuggestions = useMemo(() => {
+        if (!relatedQuery) return userBusinesses.slice(0, 8)
+        const q = relatedQuery.toLowerCase().trim()
+        return userBusinesses.filter(b => {
+            const name = (b.name || '').replace(/\n/g, ' ').toLowerCase()
+            const slug = (b.slug || '').toLowerCase()
+            const city = (b.address_info?.city || '').toLowerCase()
+            return name.includes(q) || slug.includes(q) || city.includes(q)
+        }).slice(0, 8)
+    }, [userBusinesses, relatedQuery])
+
+    // click outside handler to hide suggestions
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (relatedRef.current && !relatedRef.current.contains(e.target)) {
+                setRelatedSuggestionsVisible(false)
+            }
+        }
+        document.addEventListener('click', handleClickOutside)
+        return () => document.removeEventListener('click', handleClickOutside)
+    }, [])
+
+    // helper to display business name for currently selected related id
+    const getRelatedBusinessDisplay = () => {
+        if (!formData.relatedBusiness || formData.relatedBusiness === 'none') return ''
+        const found = userBusinesses.find(b => String(b.id) === String(formData.relatedBusiness))
+        return found ? (found.name || found.slug || found.id) : ''
+    }
+
+    // choose suggestion handler
+    const chooseRelatedSuggestion = (biz) => {
+        setFormData(prev => ({ ...prev, relatedBusiness: biz.id }))
+        setRelatedQuery(biz.name?.replace(/\n/g, ' ') || '')
+        setRelatedSuggestionsVisible(false)
+    }
+
+    // allow clearing selection
+    const clearRelatedSelection = () => {
+        setFormData(prev => ({ ...prev, relatedBusiness: 'none' }))
+        setRelatedQuery('')
+    }
+
     // --- RENDER ---
     return (
         <div className="relative flex min-h-screen">
@@ -635,7 +712,7 @@ export default function AdsCreateForm({ type, adsProps }) {
                                         onValueChange={(val) => handleInputChange('label', val)}
                                     >
                                         <SelectTrigger className="w-full border-gray-300 bg-white">
-                                            <SelectValue placeholder="Select status" />
+                                            <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="active">Public</SelectItem>
@@ -1178,6 +1255,7 @@ export default function AdsCreateForm({ type, adsProps }) {
                                 <div className="mb-4 flex flex-row items-center justify-between">
                                     <Label variant="secondary">Social Media Links</Label>
                                     <Button
+                                        type="button"                             // <-- explicit type added
                                         variant="outline"
                                         size="sm"
                                         onClick={addSocialLink}
@@ -1231,10 +1309,17 @@ export default function AdsCreateForm({ type, adsProps }) {
                                                 onChange={(e) => updateSocialLink(idx, 'url', e.target.value)}
                                                 placeholder={`Paste ${item.platform || 'social'} link... `}
                                                 className={`flex-1 ${item.error ? 'border-red-500 focus-visible: ring-red-200' : ''}`}
+                                                onKeyDown={(e) => {
+                                                    // Prevent Enter from submitting the whole form — just treat Enter as no-op here.
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                    }
+                                                }}
                                             />
 
                                             {/* Remove Button */}
                                             <Button
+                                                type="button"                         // <-- explicit type added
                                                 variant="icon-destructive"
                                                 size="icon-sm"
                                                 onClick={() => removeSocialLink(idx)}
@@ -1263,24 +1348,76 @@ export default function AdsCreateForm({ type, adsProps }) {
 
                             <div className="space-y-2">
                                 <Label variant="form">Link to Existing Business (Optional)</Label>
-                                <Select
-                                    value={formData.relatedBusiness || 'none'}
-                                    onValueChange={(val) => handleInputChange('relatedBusiness', val)}
-                                >
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Select a business" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">None</SelectItem>
-                                        {MOCK_USER_BUSINESSES.map(biz => (
-                                            <SelectItem key={biz.id} value={biz.id}>
-                                                {biz.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+
+                                {/* Input with suggestions */}
+                                <div ref={relatedRef} className="relative">
+                                    <Input
+                                        mode="edit"
+                                        placeholder={businesssLoading ? 'Loading your businesses...' : 'Type to search your businesses or select...'}
+                                        className="w-full"
+                                        value={relatedQuery || getRelatedBusinessDisplay()}
+                                        onChange={(e) => {
+                                            setRelatedQuery(e.target.value)
+                                            setRelatedSuggestionsVisible(true)
+                                            // if typing, clear selected id until user picks suggestion
+                                            setFormData(prev => ({ ...prev, relatedBusiness: 'none' }))
+                                        }}
+                                        onFocus={() => setRelatedSuggestionsVisible(true)}
+                                    />
+
+                                    {/* Clear button when a selection exists */}
+                                    {formData.relatedBusiness && formData.relatedBusiness !== 'none' && (
+                                        <button
+                                            type="button"
+                                            onClick={clearRelatedSelection}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-neutral-500 hover:text-neutral-800"
+                                        >
+                                            Clear
+                                        </button>
+                                    )}
+
+                                    {/* Suggestions dropdown */}
+                                    {relatedSuggestionsVisible && (
+                                        <div className="absolute z-50 mt-1 w-full max-h-56 overflow-auto rounded-md border bg-white shadow-sm">
+                                            <div className="py-1 text-xs text-neutral-500 px-3">
+                                                {businesssLoading ? 'Loading...' : (filteredRelatedSuggestions.length ? `${filteredRelatedSuggestions.length} result(s)` : 'No results')}
+                                            </div>
+                                            {filteredRelatedSuggestions.map((b) => (
+                                                <button
+                                                    key={b.id}
+                                                    type="button"
+                                                    onClick={() => chooseRelatedSuggestion(b)}
+                                                    className="block w-full text-left px-3 py-2 hover:bg-gray-50"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <div>
+                                                            <div className="font-medium text-sm">{(b.name || b.slug || b.id).replace(/\n/g, ' ')}</div>
+                                                            <div className="text-[11px] text-neutral-500">{b.address_info?.city?.replace(/\n/g, ' ') || b.category}</div>
+                                                        </div>
+                                                        <div className="text-[11px] text-neutral-400">{b.slug}</div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                            {/* explicit "None" option */}
+                                            <div className="border-t px-3 py-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setFormData(prev => ({ ...prev, relatedBusiness: 'none' }))
+                                                        setRelatedQuery('')
+                                                        setRelatedSuggestionsVisible(false)
+                                                    }}
+                                                    className="text-xs text-neutral-600 hover:text-neutral-900"
+                                                >
+                                                    Clear selection / None
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
                                 <Label variant="normal_text">
-                                    Connect this post to one of your business profiles.
+                                    Connect this post to one of your business profiles for automatic linking.
                                 </Label>
                             </div>
                         </div>

@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { AdsProvider } from '@/context/adsContext'
+import { BusinessProvider } from '@/context/businessContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -381,7 +382,9 @@ export default function DashboardLayout({ children }) {
         <div className="flex-1 overflow-y-auto scroll-smooth p-8">
           <div className="mx-auto max-w-7xl pb-10">
             <AdsProvider>
-              {children}
+              <BusinessProvider>
+                {children}
+              </BusinessProvider>
             </AdsProvider>
           </div>
         </div>

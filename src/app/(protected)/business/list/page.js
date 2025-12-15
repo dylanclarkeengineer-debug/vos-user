@@ -38,11 +38,15 @@ import 'remixicon/fonts/remixicon.css'
 // Import Handler và Context
 import { getBusinessesByUser } from '@/utils/business/businessHandlers' // Đảm bảo đường dẫn đúng file bạn upload
 import { useAuth } from '@/context/authContext'
+import { useBusinessContext } from '@/context/businessContext' // <-- import context
 
 export default function BusinessListPage() {
   const router = useRouter()
   const { user } = useAuth()
   const userId = user?.user_id || null
+
+  // Business context
+  const { setEditBusiness, setCopyBusiness } = useBusinessContext()
 
   // --- STATE ---
   const [businesses, setBusinesses] = useState([])
@@ -104,10 +108,19 @@ export default function BusinessListPage() {
 
   // --- ACTIONS HANDLERS ---
   const handleEdit = (id) => {
+    // find business object
+    const biz = businesses.find(b => String(b.id) === String(id))
+    if (biz) {
+      setEditBusiness(biz) // lưu vào context
+    }
     router.push(`/business/create?edit=${id}`)
   }
 
   const handleDuplicate = (id) => {
+    const biz = businesses.find(b => String(b.id) === String(id))
+    if (biz) {
+      setCopyBusiness(biz) // lưu vào context
+    }
     router.push(`/business/create?copy=${id}`)
   }
 
