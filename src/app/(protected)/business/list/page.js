@@ -1,23 +1,14 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import ConfirmDeletePost from '@/components/ads/ConfirmDeactivePost'
 import PromoteAdModal from '@/components/ads/PromoteAdModal'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -27,10 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  Tooltip,
-  TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
 } from '@/components/ui/tooltip'
 
 import 'remixicon/fonts/remixicon.css'
@@ -39,6 +27,8 @@ import 'remixicon/fonts/remixicon.css'
 import { getBusinessesByUser } from '@/utils/business/businessHandlers' // Đảm bảo đường dẫn đúng file bạn upload
 import { useAuth } from '@/context/authContext'
 import { useBusinessContext } from '@/context/businessContext' // <-- import context
+import { API_ROUTES } from '@/constants/apiRoute'
+import { ActionIcon } from '@/components/ui/action-icon'
 
 export default function BusinessListPage() {
   const router = useRouter()
@@ -122,6 +112,10 @@ export default function BusinessListPage() {
       setCopyBusiness(biz) // lưu vào context
     }
     router.push(`/business/create?copy=${id}`)
+  }
+
+  const handleViewBusiness = (slug) => {
+    router.push(API_ROUTES.businessPage(slug))
   }
 
   const handlePromote = (biz) => {
@@ -314,8 +308,10 @@ export default function BusinessListPage() {
 
                           <div className="pt-1">
                             <Button
-                              variant="link"
-                              className="h-auto p-0 text-[10px] font-bold tracking-wider text-blue-600 uppercase hover:text-blue-800"
+                              variant="brand-subtle"
+                              size="xs"
+                              className="rounded-sm"
+                              onClick={() => handleViewBusiness(biz.slug)}
                             >
                               <i className="ri-eye-line mr-1"></i> View Business
                             </Button>
@@ -328,64 +324,16 @@ export default function BusinessListPage() {
                     <TableCell className="py-6 text-center align-top">
                       <div className="flex flex-col items-center gap-3">
                         {/* EDIT */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => handleEdit(biz.id)}
-                              className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-50 text-blue-600 shadow-sm transition-all hover:bg-blue-600 hover:text-white"
-                            >
-                              <i className="ri-pencil-fill text-sm"></i>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className={tooltipStyle}>
-                            Edit
-                          </TooltipContent>
-                        </Tooltip>
+                        <ActionIcon icon="ri-pencil-fill" tooltip="Edit" onClick={() => handleEdit(biz.id)} variant="ghost" />
 
                         {/* PROMOTE */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => handlePromote(biz)}
-                              className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-50 text-purple-600 shadow-sm transition-all hover:bg-purple-600 hover:text-white"
-                            >
-                              <i className="ri-megaphone-fill text-sm"></i>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className={tooltipStyle}>
-                            Promote
-                          </TooltipContent>
-                        </Tooltip>
+                        <ActionIcon icon="ri-rocket-fill" tooltip="Promote" onClick={() => handlePromote(biz)} variant="warning" />
 
                         {/* DUPLICATE */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => handleDuplicate(biz.id)}
-                              className="flex h-8 w-8 items-center justify-center rounded-full bg-green-50 text-green-600 shadow-sm transition-all hover:bg-green-600 hover:text-white"
-                            >
-                              <i className="ri-file-copy-fill text-sm"></i>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className={tooltipStyle}>
-                            Duplicate
-                          </TooltipContent>
-                        </Tooltip>
+                        <ActionIcon icon="ri-file-copy-fill" tooltip="Duplicate" onClick={() => handleDuplicate(biz.id)} variant="success" />
 
                         {/* DEACTIVATE */}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              onClick={() => handleDeactivate(biz)}
-                              className="flex h-8 w-8 items-center justify-center rounded-full bg-red-50 text-red-600 shadow-sm transition-all hover:bg-red-600 hover:text-white"
-                            >
-                              <i className="ri-close-circle-fill text-sm"></i>
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className={tooltipStyle}>
-                            Deactivate
-                          </TooltipContent>
-                        </Tooltip>
+                        <ActionIcon icon="ri-delete-bin-6-fill" tooltip="Deactivate" onClick={() => handleDeactivate(biz)} variant="destructive" />
                       </div>
                     </TableCell>
 

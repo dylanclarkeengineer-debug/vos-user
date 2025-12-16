@@ -2,6 +2,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL
 const API_URL_ROOT = `${BASE_URL}/api`
 const NEXT_PUBLIC_REACT_JOB = process.env.NEXT_PUBLIC_REACT_JOB_URL
 const NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+const NEXT_PUBLIC_BIZ_URL = process.env.NEXT_PUBLIC_BIZ_URL
 
 export const API_ROUTES = {
   API_URL: API_URL_ROOT,
@@ -10,6 +11,7 @@ export const API_ROUTES = {
   VGC_BIZ_PREFIX: `${API_URL_ROOT}/businesses`,
   VGC_JOBS_PREFIX: `${API_URL_ROOT}/jobs`,
   listingPage: (id) => `${NEXT_PUBLIC_REACT_JOB}/ads/${id}`,
+  businessPage: (slug) => `${NEXT_PUBLIC_BIZ_URL}/location/${slug}/reviews`,
   GOOGLE_MAPS_API_KEY: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 }
 

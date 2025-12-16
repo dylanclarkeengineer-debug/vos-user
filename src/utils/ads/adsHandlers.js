@@ -144,3 +144,56 @@ export const getListAppliedJobsByUser = async ({
     return { currentPage: 1, totalPages: 0, totalApplication: 0, job_applied: [] }
   }
 }
+
+/**
+ * Lấy 1 bài đăng (authorized) bởi user/token.
+ *
+ * Endpoint ví dụ: GET /<VGC_USERS_PREFIX>/GetSingleJobPostAuthorize?id=...&country=US
+ * - Yêu cầu Authorization: Bearer <token>
+ *
+ * Trả về response.data (thường chứa { success: true, jobDetail: {...} } hoặc lỗi từ server).
+ *
+ * Tham số:
+ *  - id (string) : required
+ *  - country (string) : optional (default 'US')
+ *  - token (string|null) : Bearer token để authorize (nếu có)
+ *
+ * Behavior:
+ *  - Nếu server trả status 500 nhưng vẫn kèm payload, hàm sẽ trả về response.data như các hàm khác.
+ *  - Với lỗi mạng (no response) hàm sẽ log và trả về null.
+ */
+export const getSingleJobPostAuthorize = async ({ id, country = 'US', token = null } = {}) => {
+  if (!id) {
+    throw new Error('getSingleJobPostAuthorize: "id" is required')
+  }
+
+  try {
+    const config = {
+      headers: { 'Content-Type': 'application/json' },
+      params: { id, country },
+      // allow 500 so we can still inspect server payload when backend returns 500 with body
+      validateStatus: (status) => (status >= 200 && status < 300) || status === 500 || status === 404,
+    }
+
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`
+    }
+
+    const response = await axiosClient.get(AD_API.GET_SINGLE_JOB_AUTHORIZE, config)
+
+    // If backend returns 500 or 404 but provided body, return it for caller to inspect
+    if (response.status === 500 || response.status === 404) {
+      return response.data
+    }
+
+    return response.data
+  } catch (error) {
+    // Network error or unforeseen exception
+    console.error('Error fetching single job (authorized):', error)
+    // If axios error contains response with body, return it to caller (useful for debugging)
+    if (error.response && error.response.data) {
+      return error.response.data
+    }
+    return null
+  }
+}

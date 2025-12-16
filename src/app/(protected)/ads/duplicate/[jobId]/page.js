@@ -1581,7 +1581,7 @@ export default function CreateAdsPage({
                                 onClick={(e) => handleSubmit(e, 'active')}
                                 disabled={isLoading}
                             >
-                                {isLoading ? 'Posting...' : 'Publish Post'}
+                                {isLoading ? 'Duplicating...' : 'Duplicate Post'}
                             </Button>
                         </div>
                     </form>

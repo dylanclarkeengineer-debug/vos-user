@@ -31,6 +31,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { ActionIcon } from '@/components/ui/action-icon'
 
 import 'remixicon/fonts/remixicon.css'
 
@@ -172,13 +173,13 @@ export default function AdsListPage() {
   const handleEdit = (id) => {
     const job = jobs.find(j => j.id === id)
     if (job) setEditJob(job)
-    router.push(`/ads/create?edit=${id}`)
+    router.push(`/ads/edit/${id}`)
   }
 
   const handleDuplicate = (id) => {
     const job = jobs.find(j => j.id === id)
     if (job) setCopyJob(job)
-    router.push(`/ads/create?duplicate=${id}`)
+    router.push(`/ads/duplicate/${id}`)
   }
 
   const handlePauseClick = (ad) => { setSelectedAd(ad); setIsDeleteOpen(true) }
@@ -318,12 +319,11 @@ export default function AdsListPage() {
 
                         {/* Col 2: Actions */}
                         <TableCell className="py-6 align-top text-center">
-                          <div className="flex flex-col items-center gap-1">
-                            {/* UPDATED: Truyền variant vào ActionIcon */}
-                            <ActionIcon icon="ri-pencil-line" tooltip="Edit" onClick={() => handleEdit(item.id)} variant="icon-ghost" />
-                            <ActionIcon icon="ri-rocket-line" tooltip="Promote" onClick={() => handlePromoteClick(item)} variant="icon-warning" />
-                            <ActionIcon icon="ri-file-copy-line" tooltip="Copy" onClick={() => handleDuplicate(item.id)} variant="icon-ghost" />
-                            <ActionIcon icon="ri-delete-bin-line" tooltip="Delete" onClick={() => handlePauseClick(item)} variant="icon-destructive" />
+                          <div className="flex flex-col items-center gap-3">
+                            <ActionIcon icon="ri-pencil-line" tooltip="Edit" onClick={() => handleEdit(item.id)} variant="ghost" />
+                            <ActionIcon icon="ri-rocket-line" tooltip="Promote" onClick={() => handlePromoteClick(item)} variant="warning" />
+                            <ActionIcon icon="ri-file-copy-line" tooltip="Copy" onClick={() => handleDuplicate(item.id)} variant="success" />
+                            <ActionIcon icon="ri-delete-bin-line" tooltip="Delete" onClick={() => handlePauseClick(item)} variant="destructive" />
                           </div>
                         </TableCell>
 
@@ -421,29 +421,6 @@ export default function AdsListPage() {
     </div>
   )
 }
-
-// ============================================
-// SUB-COMPONENTS
-// ============================================
-
-// UPDATED: ActionIcon sử dụng Button với variant
-const ActionIcon = ({ icon, tooltip, onClick, variant = 'icon-ghost' }) => (
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <Button
-        variant={variant}
-        size="icon-sm"
-        onClick={onClick}
-        className="rounded-sm transition-all"
-      >
-        <i className={`${icon} text-lg`}></i>
-      </Button>
-    </TooltipTrigger>
-    <TooltipContent side="left" className="border-none bg-black text-[10px] font-bold tracking-wider text-white uppercase">
-      {tooltip}
-    </TooltipContent>
-  </Tooltip>
-)
 
 const EngagementItem = ({ icon, label, value }) => (
   <div className="flex items-start gap-2">
